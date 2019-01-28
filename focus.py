@@ -38,31 +38,42 @@ class TreeNode:
         for c in self.children:
             c.print_tree()
 
+    def ancestors(self):
+        ancestors = []
+        current = self
+        while current:
+            ancestors.append(str(current))
+            current = current.parent
+        return '\n'.join(reversed(ancestors))
+
 def get_command():
     return input("enter command")
 
 def run():
-    root_node = TreeNode(parent=None, text="ROOT NODE OF TREE")
-    root_node.done = True
-
-    dummy_node = TreeNode(parent=root_node, text="dummy node")
-    dummy_node.done = True
-
-    current_task = dummy_node
+    # while true
+    #     get the command
+    #     execute the command
+    #     check if we are done (or find next task to do)
+    #     print current info
+    root_nodes = []
+    current_task = None
     while True:
 
         command = get_command()
 
+        # EXECUTE THE COMMAND
         if command in ["enqueue", "next-task"]:
-            next_task = input("enter next task")
-            current_task.parent.add_child(TreeNode(text=next_task))
-
+            new_task_text = input("enter next task")
+            new_task = TreeNode(text=new_task_text)
+            root_nodes.append(new_task)
         elif command in [ "subtask", "call", "push"]:
-            sub_task = input("enter subtask")
-            child = TreeNode(text=sub_task)
-            current_task.add_child(child)
-            current_task = child
-
+            task_text = input("enter subtask")
+            new_task = TreeNode(text=task_text)
+            if current_task is not None:
+                current_task.add_child(new_task)
+            else:
+                root_nodes.append(new_task)
+            current_task = new_task
         elif command in ["return", "done", "pop"]:
             current_task.done = True
             if not current_task.is_done():
@@ -75,33 +86,35 @@ def run():
                 else:
                     raise Exception("Can't happen, is_done() would have returned True")
 
-
-                current_task = current_task.parent
-                if current_task is root_node:
-                    current_task = dummy_node
             else:
                 current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
                 current_task = current_task.parent
-                if current_task is root_node:
-                    current_task = dummy_node
-
         else:
             print("UNKNOWN COMMAND " + command)
             continue
 
-
-        if current_task is dummy_node:
-            for child in root_node.children:
-                if child is not dummy_node and not child.is_done():
-                    current_task = child
+        # CHECK IF WE ARE DONE (find next undone task if not)
+        if current_task is None:
+            # Might be done, check that no tasks are not done,
+            # if we make it all the way through the loop, print and quit.
+            for n in root_nodes:
+                if not n.is_done():
+                    current_task = n
                     break
             else:
-                print("EVERYTHING IS DONE. GOOD JOB.")
-                root_node.print_tree()
+                print("EVERYTHING IS DONE")
+                for n in root_nodes:
+                    n.print_tree()
                 quit()
 
 
+        # PRINT CURRENT INFO AFTER COMMAND
+        print(current_task.ancestors())
         print("CURRENT TASK : " + current_task.text)
+        # TODO Here we could also write the current task to a file and have
+        # another prograp periodically notify me with the text of this file
+        # like what I did with my nag fish functions
+
 if __name__ == "__main__":
     a = TreeNode()
     b = TreeNode()
