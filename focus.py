@@ -3,7 +3,9 @@ class TreeNode:
     def __init__(self, **kwargs):
         self.children = []
         self.text = kwargs.get('text', 'this node')
-        self.parent = kwargs.get('parent', None)
+        self.parent = None
+        if kwargs.get("parent", None):
+            kwargs["parent"].add_child(self)
         self.done = False
         self.update_depth()
         self.created_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
@@ -51,17 +53,17 @@ def run():
 
         command = get_command()
 
-        if command == "next-task":
+        if command in ["enqueue", "next-task"]:
             next_task = input("enter next task")
             current_task.parent.add_child(TreeNode(text=next_task))
 
-        elif command == "subtask":
+        elif command in [ "subtask", "call", "push"]:
             sub_task = input("enter subtask")
             child = TreeNode(text=sub_task)
             current_task.add_child(child)
             current_task = child
 
-        elif command == "done":
+        elif command in ["return", "done", "pop"]:
             current_task.done = True
             if not current_task.is_done():
                 print("Cannot mark done, task has unfinished children")
