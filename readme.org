@@ -1,0 +1,194 @@
+#+TITLE: Focus Tree Project
+
+* Abstract
+
+This program is for micromanaging focus during complex tasks.
+
+It models the idea of a function call tree and applies it to human tasks.
+
+* Idea
+
+** Example situation where this would help
+
+I'm working on something, say /adding SQLite functionnality to a program/.   So
+my current task is
+
+#+BEGIN_QUOTE
+Adding SQLite functionnality to MyProgram
+#+END_QUOTE
+
+*The first problem* with this is that if I go in and say "today I'm going to work on
+ that", it's too big.
+
+So I may want to create subtasks like "Open an SQLite database connection in C"
+which I would then go on to do, then I would invent a next /subtask/ and keep
+going.
+
+But let's say I see a bug and notice that to be able to open a connection, I'll
+have to solve that bug.
+
+But during the solve of the bug, I need to research the finer points of the C
+standard library.
+
+#+BEGIN_QUOTE
+*Now, I've completed a task!*  Hooray!  I found out that /the compiler doesn't need to see the declaration of a function to write machine code for the function call/ .  *OK, now what*.
+#+END_QUOTE
+
+*** What happened
+
+Because I was researching the finer points of C, I lost track of what I was
+working on initially.
+
+*** How to solve
+
+If we think in terms of functions, the tasks look like this:
+
+#+BEGIN_SRC python
+def add_sqlite_functionnality():
+    open_sqlite_connection_in_C():
+
+def open_sqlite_connection_in_C():
+    research_how_to_open_sqlite_connection_in_C()
+    do_it_in_the_code()
+
+def do_it_in_the_code():
+    result = try_what_I_saw_online()
+    if not result:
+        find_out_why_it_didnt_work()
+        solve_problems()
+#+END_SRC
+
+This seems well and good, but that's *because control always returns to the
+caller in programming, but not in our heads*
+
+** What this program does (or will do)
+
+ *This program will add a call and return statement to your mind.*
+
+ While you're on a current task, you find that you need to go into a subtask,
+ then you tell the program.  When that task is done, you use your mental return
+ statement to go back to the parent task (or the caller).
+
+ When the return statement is called, the program will mark the current task as
+ done.  It will then check with the parent if it has any more subtasks that are
+ not done.  If so it will set one of those as the current task.  If all the
+ subtasks are done, it will mark the parent as the current task (think of
+ subtasks as the multiple lines of a function, if all subtasks are done, we
+ return one level up in the call stack)
+
+ This is an example from the *very primitive* terminal client that i made to test
+ things out.  After each interaction, the program tells you what your current
+ task is.  You have either the option to add a =subtask= (which will automatically
+ become the current task (as in a function call)) or to =return= from the current
+ task (which will automatically make the parent task the current task). 
+
+ After the example I will show the tree that was generated.  Note that I would
+ only have one of these paragraphs showing at a time in my terminal.
+
+ #+BEGIN_EXAMPLE
+ python FocusTree.py
+
+ Enter Task > Add SQLite functionnality to SPI
+ >> CURRENT-TASK : Add SQLite functionnality to SPI
+
+ Enter command > subtask
+ Enter subtask > Open SQLite connection in C
+ >> CURRENT-TASK : Open SQLite connection in C
+
+ Enter command > subtask
+ Enter subtask > Research solutions for opening sqlite thing in C
+ >> CURRENT-TASK : Research solutions for opening sqlite thing in C
+
+ Enter command > return
+ >> CURRENT-TASK : Open SQLite connection in C
+
+ Enter command > subtask
+ Enter subtask > Try the solution found online
+ >> CURRENT-TASK : Try the solution found online
+
+ Enter Command > return
+ >> CURRENT-TASK : Open SQLite connection in C
+
+ Enter Command > subtask
+ Enter subtask > Find out why the solution I tried didn't work
+ >> CURRENT-TASK : Find out why the solution I tried didn't work
+
+ # I found a but that is preventing what I'm doing from working
+ Enter Cmmand > return
+ >> CURRENT-TASK : Open SQLite connection in C
+
+ Enter Command > subtask
+ Enter subtask > Solve the bug that I found
+ >> CURRENT TASK : Solve the bug that I found
+
+ # During investigation, I saw that I need to research some fine point about the 
+ # C standard library
+ Enter Command > Subtask
+ Enter Subtask > Research some fine point about the C standard library
+ >> CURRENT-TASK : Research some fine point about the C standard library
+
+ Enter Command > return
+ >> CURRENT-TASK : Solve the bug that I found
+
+ Enter Command > Subtask
+ Enter subtask > Implement the solution that I found
+ >> CURRENT-TASK : Implement the solution that I found
+
+ Enter Command > return
+ >> CURRENT-TASK : Solve the bug that I found
+
+ Enter Command > return
+ >> CURRENT-TASK : Open SQLite connection in C
+
+ Enter COmmand > subtask
+ Enter subtask > Try Creating the connection now that the bug is fixed
+ >> CURRENT-TASK : Try Creating the connection now that the bug is fixed
+
+ Enter Command > return
+ >> CURRENT-TASK : Open SQLite connection in C
+
+ Enter Command > return
+ >> CURRENT-TASK : Add SQLite functionnality to SPI
+
+ Enter COmmand > subtask
+ Enter subtask > Read an sqlite database file
+ >> CURRENT-TASK : Read an sqlite database file
+ #+END_EXAMPLE
+
+ This sequence can be well represented by a tree:
+
+ #+BEGIN_EXAMPLE
+ - Add SQLite functionnality to SPI
+         - Open SQLite connection in C
+                 - Research solutions for opening sqlite thing in C
+                 - Try the solution found online
+                 - Find out why the solution I tried didn't work
+                         - Research some fine point about the C standard library
+                         - Implement the solution that I found
+                 - Try Creating the connection now that the bug is fixed
+         - Read an sqlite database file
+ #+END_EXAMPLE
+
+ *And this is why my program is called /Focus Tree/*, it allows to manage
+  contexts in the same way that function calls work.
+
+ I allows me to manage my focus by mimicking function calls and a call tree.
+
+ If I didn't have that program, when I implemented the solution to the bug, I
+ might go back to "Add SQlite funcitonnality to SPI" because I forgot that my
+ context when I went on an adventure to solve that bug was actually "trying to
+ open an sqlite connection in C"
+
+ I want to add other functionnality to manipulate this tree that we are creating
+ with our commands.  Maybe at the start of the main task, I might have liked to
+ define subtasks without jumping into them like so:
+
+ #+BEGIN_EXAMPLE
+ - Add SQLite functionnality to SPI
+         - Open SQLite connection in C
+         - Read an sqlite database file
+ #+END_EXAMPLE
+
+ Then I would mark the /Open Sqlite connection in C/ as the current task and use
+ the call and return operators to manage focus.
+
