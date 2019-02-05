@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Focus Tree</title>
+    </head>
+    <body>
+        <H1>FocusTree.phil</H1>
+        <p id="output" >Output will go here</p>
+        <script type="text/javascript">
+         document.write('<p>Hello world!</p>');
+         let req = new XMLHttpRequest();
+         console.log("cock")
+         console.log(req);
+         req.onreadystatechange = function(){
+             console.log(req);
+         };
+         req.open('GET', '0.0.0.0:8181/index.html')
+         req.send()
+
+        </script>
+    </body>
+</html>

@@ -10,22 +10,28 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         print(self.__dict__)
         print(self.path)
         self.send_response(200)
-        self.send_header('Content-type', 'text/json')
-        self.end_headers()
 
         if self.path == '/fuck_my_face':
             return self.send_tree()
         elif self.path == '/current_task':
             return self.send_current()
+        elif self.path == '/index.html':
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            with open('index.html', 'rb') as f:
+                self.wfile.write(f.read())
         else:
             return self.send_tree()
 
 
     def send_tree(self):
+        self.send_header('Content-type', 'text/json')
+        self.end_headers()
         message = json.dumps({'current_task':"task", "tree":"tree", "ancestors":"ancestors"})
         self.wfile.write(bytes(message, "utf-8"))
 
     def send_current(self):
+        self.send_header('Content-type', 'text/json')
         self.end_headers()
         message = json.dumps({'current_task': "task"})
         self.wfile.write(bytes(message, "utf-8"))
