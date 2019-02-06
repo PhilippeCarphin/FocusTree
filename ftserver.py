@@ -7,10 +7,7 @@ ADDRESS = '0.0.0.0'
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
-        print(self.__dict__)
-        print(self.path)
         self.send_response(200)
-
         if self.path == '/fuck_my_face':
             return self.send_tree()
         elif self.path == '/current_task':
