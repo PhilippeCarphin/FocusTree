@@ -78,6 +78,13 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     try:
+
+        # Obviously, frankly, this should be done with an argparse thingy
+        import sys
+        if len(sys.argv) >= 3:
+            if sys.argv[1] == '--port':
+                PORT_NUMBER = int(sys.argv[2])
+
         server = HTTPServer(
             (ADDRESS, PORT_NUMBER),
             FocusTreeRequestHandler
