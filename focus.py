@@ -63,12 +63,18 @@ class TreeManager:
 
     def execute_command(self, command):
         words = command.split();
+        if not words:
+            raise IndexError("Missing Command: Must supply a command")
         operation = words[0]
         args = ' '.join(words[1:])
         print("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
         if operation in ["enqueue", "next-task"]:
+            if not args:
+                raise IndexError("Missing Command : This command must have an argument")
             self.next_task(args)
         elif operation in [ "subtask", "call", "push"]:
+            if not args:
+                raise IndexError("Missing Command : This command must have an argument")
             self.subtask(args)
         elif operation in ["return", "done", "pop"]:
             self.done()
@@ -109,7 +115,7 @@ class TreeManager:
             self.root_nodes.append(new_task)
         self.current_task = new_task
 
-    def done(self, args):
+    def done(self):
         self.current_task.done = True
         if not self.current_task.is_done():
             print("Cannot mark done, task has unfinished children")
@@ -123,7 +129,7 @@ class TreeManager:
 
         else:
             self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
-            self.current_task = current_task.parent
+            self.current_task = self.current_task.parent
 
 def run():
     # while true

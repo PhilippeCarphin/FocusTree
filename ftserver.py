@@ -15,8 +15,22 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode('utf-8')
             print(str(post_data))
-            THE_TREE.execute_command(post_data)
+
+            status = 'OK'
+            errors = None
+            try:
+                THE_TREE.execute_command(post_data)
+            except IndexError as e:
+                status = 'error'
+                errors = str(e)
+
+            resp = {
+                "command": post_data,
+                "status" : status,
+                "error"  : errors
+            }
             self.end_headers()
+            self.wfile.write(bytes(json.dumps(resp), 'utf-8'))
 
 
     def do_GET(self):

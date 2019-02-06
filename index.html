@@ -10,13 +10,26 @@
         <p id="output" >Output will go here</p>
         <p class="label" >Current Task:</p>
         <p id="current-task" >CURRENT TASK</p>
-        <div><button id="send-button" onclick="sendCommand()" >SEND</button> <p id="command" >subtask new task text</p></div>
+        <p class="label" >Errors: </p>
+        <p id="errors" >None</p>
+        <div>
+            <button id="send-button" onclick="sendCommand()" >SEND</button>
+            <input id="command" type="text" name="fname"><br>
+        </div>
         <script type="application/javascript">
+         const displayErrors = function(errorMessage){
+             document.getElementById('errors').innerHTML = errorMessage;
+         }
          let sendCommand = function(){
              let req = new XMLHttpRequest();
              req.onreadystatechange = function(){
                  if(this.readyState != 4){return;}
                  if(this.status != 200){console.log(this); return;}
+
+                 responseObject = JSON.parse(this.responseText);
+                 console.log(responseObject)
+                 console.log("DID I GET HERE");
+                 document.getElementById('errors').innerHTML = responseObject.errors
 
                  updateTreeView();
                  updateCurrentTask();
@@ -24,7 +37,9 @@
 
              req.open('POST', '/send-command');
              req.setRequestHeader("Content-type", "text/text");
-             const command = document.getElementById('command').innerHTML;
+             const command = document.getElementById('command').value;
+             console.log("sending command ....")
+             console.log(command);
              req.send(command);
          };
 
