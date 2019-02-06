@@ -10,6 +10,8 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         if self.path == '/fuck_my_face':
             return self.send_tree()
+        elif self.path == '/node_modules/json-formatter.js':
+            self.send_json_formatter()
         elif self.path == '/current_task':
             return self.send_current()
         elif self.path == '/index.html':
@@ -24,6 +26,11 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         with open(filename, 'rb') as f:
             self.wfile.write(f.read())
 
+    def send_json_formatter(self):
+        print("sending json formatter")
+        self.send_header('Content-type', 'application/javascript')
+        self.end_headers()
+        self.send_file('node_modules/json-formatter-js/dist/json-formatter.js')
 
     def send_tree(self):
         self.send_header('Content-type', 'application/javascript')
