@@ -7,15 +7,27 @@
     <body>
         <H1>FocusTree.phil</H1>
         <p id="output" >Output will go here</p>
-        <script type="text/javascript">
+        <script type="application/javascript">
          document.write('<p>Hello world!</p>');
          let req = new XMLHttpRequest();
-         console.log("cock")
-         console.log(req);
          req.onreadystatechange = function(){
-             console.log(req);
+            if(this.readyState != 4){
+                return;
+            }
+
+            if(this.status != 200){
+                console.log('ERROR handling response from request ...');
+                console.log(this)
+                return;
+            }
+
+            const rt = req.responseText;
+            const ro = JSON.parse(rt);
+            console.log(ro);
+            // TODO Display JSON nicely
+            document.getElementById("output").innerHTML = JSON.stringify(ro, null, 4);
          };
-         req.open('GET', '0.0.0.0:8181/index.html')
+         req.open('GET', '0.0.0.0:8181/fuck_my_face')
          req.send()
 
         </script>
