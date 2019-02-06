@@ -8,8 +8,27 @@
         <H1>FocusTree.phil</H1>
         <p id="output" >Output will go here</p>
         <p id="current-task" >CURRENT TASK</p>
-        <div><p id="send-button" >SEND</p> <p id="command" >INPUT FIELD FOR COMMAND</p></div>
+        <div><button id="send-button" onclick="sendCommand('asdf')" >SEND</button> <p id="command" >INPUT FIELD FOR COMMAND</p></div>
         <script type="application/javascript">
+         let sendCommand = function(message){
+             let req = new XMLHttpRequest();
+             req.onreadystatechange = function(){
+                 if(this.readyState != 4){
+                     return;
+                 }
+
+                 if(this.status != 200){
+                     console.log("ERROR in response handler for send_command");
+                     console.log(this);
+                     return;
+                 }
+
+                 console.log(this);
+             }
+
+             req.open('POST', '/send-command');
+             req.send();
+         };
          document.write('<p>Hello world!</p>');
          let req = new XMLHttpRequest();
          req.onreadystatechange = function(){

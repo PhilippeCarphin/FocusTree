@@ -6,6 +6,10 @@ ADDRESS = '0.0.0.0'
 
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
+    def do_POST(self):
+        if self.path == '/send-command':
+            self.send_response(200)
+            self.end_headers()
     def do_GET(self):
         self.send_response(200)
         if self.path == '/fuck_my_face':
