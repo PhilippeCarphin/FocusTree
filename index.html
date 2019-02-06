@@ -43,11 +43,7 @@
                 return;
             }
 
-            const rt = req.responseText;
-            const ro = JSON.parse(rt);
-            console.log(ro);
-            // TODO Display JSON nicely
-            document.getElementById("output").innerHTML = JSON.stringify(ro, null, 4);
+            document.getElementById("output").innerHTML = this.responseText;
          };
          req.open('GET', '0.0.0.0:8181/fuck_my_face')
          req.send()

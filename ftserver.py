@@ -1,8 +1,11 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import focus
 
 PORT_NUMBER = 8181
 ADDRESS = '0.0.0.0'
+
+THE_TREE = focus.TreeManager()
 
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
@@ -12,6 +15,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode('utf-8')
             print(str(post_data))
+            THE_TREE.execute_command(post_data)
             self.end_headers()
 
 
@@ -35,10 +39,10 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
 
     def send_tree(self):
-        self.send_header('Content-type', 'application/javascript')
+        self.send_header('Content-type', 'text/text')
         self.end_headers()
         message = json.dumps({'current_task':"task", "tree":"tree", "ancestors":"ancestors"})
-        self.wfile.write(bytes(message, "utf-8"))
+        self.wfile.write(bytes(THE_TREE.print_tree(), "utf-8"))
 
     def send_current(self):
         self.send_header('Content-type', 'application/javascript')

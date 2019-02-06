@@ -30,13 +30,15 @@ class TreeNode:
         return self.done
 
     def __str__(self):
-        indent = '    ' * self.depth
+        indent = '|' + '----' * self.depth
         return indent + self.text + f"[created: {self.created_on}, finished: {self.finished_on}]"
 
     def print_tree(self):
-        print(self)
+        lines = [str(self)]
         for c in self.children:
-            c.print_tree()
+            lines.append(c.print_tree())
+
+        return '<br>'.join(lines)
 
     def ancestors(self):
         ancestors = []
@@ -48,6 +50,80 @@ class TreeNode:
 
 def get_command():
     return input("enter command")
+
+class TreeManager:
+    def __init__(self):
+        self.root_nodes = []
+        self.current_task = None
+        self.operations = {
+            "subtask": self.subtask,
+            "done": self.done,
+            "next-task": self.next_task
+        }
+
+    def execute_command(self, command):
+        words = command.split();
+        operation = words[0]
+        args = ''.join(words[1:])
+        print("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
+        if operation in ["enqueue", "next-task"]:
+            self.next_task(args)
+        elif operation in [ "subtask", "call", "push"]:
+            self.subtask(args)
+        elif operation in ["return", "done", "pop"]:
+            self.done()
+        else:
+            print("UNKNOWN COMMAND " + command)
+            return
+
+        self.check_if_done()
+
+    def check_if_done(self):
+        # CHECK IF WE ARE DONE (find next undone task if not)
+        if self.current_task is None:
+            # Might be done, check that no tasks are not done,
+            # if we make it all the way through the loop, print and quit.
+            for n in self.root_nodes:
+                if not n.is_done():
+                    self.current_task = n
+                    break
+            else:
+                print("EVERYTHING IS DONE")
+                self.print_tree()
+
+    def print_tree(self):
+        lines = []
+        for n in self.root_nodes:
+            lines.append(n.print_tree())
+
+        return '->' + '\n->'.join(lines)
+
+    def next_task(self, task):
+        self.root_nodes.append(TreeNode(text=task))
+
+    def subtask(self, task):
+        new_task = TreeNode(text=task)
+        if self.current_task is not None:
+            self.current_task.add_child(new_task)
+        else:
+            self.root_nodes.append(new_task)
+        self.current_task = new_task
+
+    def done(self, args):
+        self.current_task.done = True
+        if not self.current_task.is_done():
+            print("Cannot mark done, task has unfinished children")
+            self.current_task.done = False
+            for c in self.current_task.children():
+                if not c.is_done():
+                    self.current_task = c
+                    break
+            else:
+                raise Exception("Can't happen, is_done() would have returned True")
+
+        else:
+            self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
+            self.current_task = current_task.parent
 
 def run():
     # while true
