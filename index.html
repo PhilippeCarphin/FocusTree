@@ -27,7 +27,8 @@
              }
 
              req.open('POST', '/send-command');
-             req.send();
+             // req.setRequestHeader("Content-type", "application/json");
+             req.send("subtask make this thing work");
          };
          document.write('<p>Hello world!</p>');
          let req = new XMLHttpRequest();

@@ -9,7 +9,12 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path == '/send-command':
             self.send_response(200)
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length).decode('utf-8')
+            print(str(post_data))
             self.end_headers()
+
+
     def do_GET(self):
         self.send_response(200)
         if self.path == '/fuck_my_face':
