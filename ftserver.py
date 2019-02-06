@@ -26,13 +26,13 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
 
     def send_tree(self):
-        self.send_header('Content-type', 'text/json')
+        self.send_header('Content-type', 'application/javascript')
         self.end_headers()
         message = json.dumps({'current_task':"task", "tree":"tree", "ancestors":"ancestors"})
         self.wfile.write(bytes(message, "utf-8"))
 
     def send_current(self):
-        self.send_header('Content-type', 'text/json')
+        self.send_header('Content-type', 'application/javascript')
         self.end_headers()
         message = json.dumps({'current_task': "task"})
         self.wfile.write(bytes(message, "utf-8"))
