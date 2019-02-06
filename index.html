@@ -5,17 +5,13 @@
         <title>Focus Tree</title>
     </head>
     <body>
-        <H1>FocusTree.phil</H1>
-        <p class="label" >Complete Tree:</p>
-        <p id="output" >Output will go here</p>
-        <p class="label" >Current Task:</p>
-        <p id="current-task" >CURRENT TASK</p>
-        <p class="label" >Errors: </p>
-        <p id="errors" >None</p>
-        <div>
-            <button id="send-button" onclick="sendCommand()" >SEND</button>
-            <input id="command" type="text" name="fname"><br>
-        </div>
-        <script type="text/javascript" src="/files/main.js"></script>
+        <div id="app-container"></div>
+        <!-- Load React. -->
+        <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+        <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+        <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+
+        <!-- Load our React component. -->
+        <script src="/files/main.js"></script>
     </body>
 </html>
