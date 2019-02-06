@@ -23,7 +23,8 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         if self.path == '/fuck_my_face':
             return self.send_tree()
-        elif self.path == '/current_task':
+        elif self.path == '/current-task':
+            print("CURRENT TASK")
             return self.send_current()
         elif self.path == '/index.html':
             self.send_header('Content-type', 'text/html')
@@ -48,7 +49,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'application/javascript')
         self.end_headers()
         message = json.dumps({'current_task': "task"})
-        self.wfile.write(bytes(message, "utf-8"))
+        self.wfile.write(bytes(str(THE_TREE.current_task), "utf-8"))
 
 
 

@@ -6,48 +6,54 @@
     </head>
     <body>
         <H1>FocusTree.phil</H1>
+        <p class="label" >Complete Tree:</p>
         <p id="output" >Output will go here</p>
+        <p class="label" >Current Task:</p>
         <p id="current-task" >CURRENT TASK</p>
-        <div><button id="send-button" onclick="sendCommand('asdf')" >SEND</button> <p id="command" >INPUT FIELD FOR COMMAND</p></div>
+        <div><button id="send-button" onclick="sendCommand()" >SEND</button> <p id="command" >subtask new task text</p></div>
         <script type="application/javascript">
-         let sendCommand = function(message){
+         let sendCommand = function(){
              let req = new XMLHttpRequest();
              req.onreadystatechange = function(){
-                 if(this.readyState != 4){
-                     return;
-                 }
+                 if(this.readyState != 4){return;}
+                 if(this.status != 200){console.log(this); return;}
 
-                 if(this.status != 200){
-                     console.log("ERROR in response handler for send_command");
-                     console.log(this);
-                     return;
-                 }
-
-                 console.log(this);
+                 updateTreeView();
+                 updateCurrentTask();
              }
 
              req.open('POST', '/send-command');
-             // req.setRequestHeader("Content-type", "application/json");
-             req.send("subtask make this thing work");
+             req.setRequestHeader("Content-type", "text/text");
+             const command = document.getElementById('command').innerHTML;
+             req.send(command);
          };
-         document.write('<p>Hello world!</p>');
-         let req = new XMLHttpRequest();
-         req.onreadystatechange = function(){
-            if(this.readyState != 4){
-                return;
-            }
 
-            if(this.status != 200){
-                console.log('ERROR handling response from request ...');
-                console.log(this)
-                return;
-            }
+         let updateTreeView = function(){
+             let req = new XMLHttpRequest();
+             req.onreadystatechange = function(){
+                 if(this.readyState != 4){return;}
+                 if(this.status != 200){console.log(this); return;}
 
-            document.getElementById("output").innerHTML = this.responseText;
+                 document.getElementById("output").innerHTML = this.responseText;
+             };
+             req.open('GET', '0.0.0.0:8181/fuck_my_face')
+             req.send()
          };
-         req.open('GET', '0.0.0.0:8181/fuck_my_face')
-         req.send()
+         updateTreeView();
 
+         let updateCurrentTask = function(){
+             req = new XMLHttpRequest();
+             req.open('GET', '/current-task', true);
+             req.onreadystatechange = function(){
+                 if(this.readyState != 4){return;}
+                 if(this.status != 200){console.log(this); return;}
+
+                 document.getElementById('current-task').innerHTML = this.responseText
+
+             };
+             req.send();
+         }
+         updateCurrentTask()
         </script>
     </body>
 </html>

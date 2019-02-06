@@ -64,7 +64,7 @@ class TreeManager:
     def execute_command(self, command):
         words = command.split();
         operation = words[0]
-        args = ''.join(words[1:])
+        args = ' '.join(words[1:])
         print("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
         if operation in ["enqueue", "next-task"]:
             self.next_task(args)
