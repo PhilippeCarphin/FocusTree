@@ -35,11 +35,14 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self.send_response(200)
+        print(self.path)
         if self.path == '/fuck_my_face':
             return self.send_tree()
         elif self.path == '/current-task':
             print("CURRENT TASK")
             return self.send_current()
+        elif self.path == '/files/main.js':
+            self.send_javascript('main.js')
         elif self.path == '/index.html':
             self.send_header('Content-type', 'text/html')
             self.end_headers()
@@ -51,6 +54,12 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
     def send_file(self, filename):
         with open(filename, 'rb') as f:
             self.wfile.write(f.read())
+
+    def send_javascript(self, filename):
+        self.send_header('Content-type', 'application/javascript')
+        self.end_headers()
+        self.send_file(filename)
+
 
 
     def send_tree(self):
