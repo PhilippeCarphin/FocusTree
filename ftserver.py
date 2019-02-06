@@ -15,10 +15,14 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         elif self.path == '/index.html':
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-            with open('index.html', 'rb') as f:
-                self.wfile.write(f.read())
+            self.send_file('index.html')
         else:
             return self.send_tree()
+
+
+    def send_file(self, filename):
+        with open(filename, 'rb') as f:
+            self.wfile.write(f.read())
 
 
     def send_tree(self):
