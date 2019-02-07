@@ -5,6 +5,10 @@
       "config/**/*.js",
       "node_modules/**/*.ts",
       "coverage/lcov-report/*.js"
+    ],
+     "include": [
+      "typings/index.d.ts",
+      "src/**/*"
     ]
   }
 }
