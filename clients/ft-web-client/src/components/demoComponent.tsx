@@ -1,3 +1,4 @@
+import './demoComponent.css'
 import * as React from 'react';
 
 interface IProps {
@@ -37,7 +38,8 @@ class DemoComponent extends React.Component<IProps, IState> {
             .then((resp)=> resp.json())
             .then((result)=>{
                 console.log(result);
-                this.setState({tree: result})
+                console.log(JSON.stringify(result, null, 2));
+                this.setState({tree: result});
             });
 
     }
@@ -61,7 +63,15 @@ class DemoComponent extends React.Component<IProps, IState> {
                     </label>
                     <input type="submit" value="submit"/>
                 </form>
-                <p>{JSON.stringify(this.state.tree, null, 4)}</p>
+            <div className="DemoComponent-show-json">
+            {
+                // L'objectif est juste de voir la string produite par stringify pour qu'elle s'affiche comme dans la console
+                JSON.stringify(this.state.tree, null, 2).split("\n").map(
+                    (i,key) => <div className="DemoComponent-line" key={key}>{i}</div>
+                )
+
+            }
+            </div>
             </div>
         );
     }
