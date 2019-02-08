@@ -1,8 +1,17 @@
 import * as React from 'react';
 
-class DemoComponent extends React.Component {
+interface IProps {
+    fmulp: string
+}
+
+class DemoComponent extends React.Component<IProps> {
     public render() {
-        return <h1>Hello World</h1>;
+        return (
+            <div>
+                <h1>Hello World</h1>
+                <p>The value of fmulp is {this.props.fmulp}</p>
+            </div>
+        );
     }
 }
 
