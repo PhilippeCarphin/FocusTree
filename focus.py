@@ -11,6 +11,12 @@ class TreeNode:
         self.created_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
         self.finished_on = "DOES NOT APPLY"
 
+    def toDict(self):
+        return {
+            "text": self.text,
+            "children": [ c.toDict() for c in self.children]
+        }
+
     def update_depth(self):
         self.depth = self.parent.depth + 1 if self.parent else 0
 
@@ -59,6 +65,12 @@ class TreeManager:
             "subtask": self.subtask,
             "done": self.done,
             "next-task": self.next_task
+        }
+
+    def toDict(self):
+        return {
+            "root_nodes": [r.toDict() for r in self.root_nodes],
+            "current_task": self.current_task.text if self.current_task is not None else "--NONE--"
         }
 
     def execute_command(self, command):
@@ -131,6 +143,12 @@ class TreeManager:
             self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
             self.current_task = self.current_task.parent
 
+def make_test_tree():
+    root = TreeNode(text="This is the root node of the tree")
+    root.add_child(TreeNode(text="This is a sub-task of root"))
+    root.children[0].add_child(TreeNode(text="This is a sub-sub-task of root"))
+    root.add_child(TreeNode(text="This is another child of root"))
+    return root
 
 if __name__ == "__main__":
     a = TreeNode()

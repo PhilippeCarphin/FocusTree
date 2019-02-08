@@ -7,6 +7,9 @@ ADDRESS = '0.0.0.0'
 
 THE_TREE = focus.TreeManager()
 
+a_root_node = focus.make_test_tree()
+THE_TREE.root_nodes.append(a_root_node)
+
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
@@ -36,7 +39,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         print(self.path)
-        if self.path == '/fuck_my_face':
+        if self.path == '/fuck_my_face' or self.path == '/tree':
             return self.send_tree()
         elif self.path == '/current-task':
             print("CURRENT TASK")
@@ -65,8 +68,9 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
     def send_tree(self):
         self.send_header('Content-type', 'text/text')
         self.end_headers()
-        message = json.dumps({'current_task':"task", "tree":"tree", "ancestors":"ancestors"})
-        self.wfile.write(bytes(THE_TREE.print_tree(), "utf-8"))
+        message = json.dumps(THE_TREE.toDict())
+        self.wfile.write(bytes(message, 'utf-8'))
+
 
     def send_current(self):
         self.send_header('Content-type', 'application/javascript')
