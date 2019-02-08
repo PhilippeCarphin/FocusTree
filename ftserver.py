@@ -56,14 +56,15 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.send_file('./clients/ft-web-client/build/index.html')
         else:
-            if self.path.startswith('/static') or self.path == '/service-worker.js':
+            if self.path.startswith('/static') or self.path == '/service-worker.js' or self.path == '/favicon.ico':
                 fullpath = './clients/ft-web-client/build' + self.path
             elif self.path[1:] in REACT_MANIFEST:
                 fullpath = self.path[1:]
             if self.path.endswith('css'): ct = 'text/css'
             elif self.path.endswith('js'): ct = 'text/javascript'
             elif self.path.endswith('html'): ct = 'text/html'
-            else: ct = 'text/text'
+            elif self.path.endswith('svg'): ct = 'text/html'
+            else: ct = ''
             self.send_header('Content-Type', ct)
             self.end_headers()
             # print("REACT MANIFEST: key:{}, value:{}".format(f,REACT_MANIFEST[f]))
