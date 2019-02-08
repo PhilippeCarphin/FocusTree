@@ -9,6 +9,7 @@ THE_TREE = focus.TreeManager()
 
 a_root_node = focus.make_test_tree()
 THE_TREE.root_nodes.append(a_root_node)
+REACT_MANIFEST = {}
 
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
@@ -50,8 +51,23 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.send_file('index.html')
+        elif self.path == '/web-client':
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.send_file('./clients/ft-web-client/build/index.html')
         else:
-            return self.send_tree()
+            if self.path.startswith('/static') or self.path == '/service-worker.js':
+                fullpath = './clients/ft-web-client/build' + self.path
+            elif self.path[1:] in REACT_MANIFEST:
+                fullpath = self.path[1:]
+            if self.path.endswith('css'): ct = 'text/css'
+            elif self.path.endswith('js'): ct = 'text/javascript'
+            elif self.path.endswith('html'): ct = 'text/html'
+            else: ct = 'text/text'
+            self.send_header('Content-Type', ct)
+            self.end_headers()
+            # print("REACT MANIFEST: key:{}, value:{}".format(f,REACT_MANIFEST[f]))
+            self.send_file(fullpath)
 
 
     def send_file(self, filename):
@@ -83,6 +99,8 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     try:
 
+        with open('./clients/ft-web-client/build/manifest.json') as f:
+            manifest = json.loads(f.read())
         # Obviously, frankly, this should be done with an argparse thingy
         import sys
         if len(sys.argv) >= 3:
