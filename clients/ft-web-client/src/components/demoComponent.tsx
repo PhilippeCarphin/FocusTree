@@ -34,8 +34,10 @@ class DemoComponent extends React.Component<IProps, IState> {
         }).then((resp)=>{console.log(resp); return resp.json();});
 
 
-        fetch('http://localhost:5051/tree')
-            .then((resp)=> resp.json())
+        fetch('http://localhost:5051/tree', {
+            method:'GET',
+            headers:{'Content-Type': 'text/plain'}
+        }) .then((resp)=> resp.json())
             .then((result)=>{
                 console.log(result);
                 console.log(JSON.stringify(result, null, 2));

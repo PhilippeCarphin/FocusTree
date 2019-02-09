@@ -14,6 +14,7 @@ REACT_MANIFEST = {}
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
         if self.path == '/send-command':
             self.send_response(200)
             content_length = int(self.headers['Content-Length'])
@@ -33,12 +34,14 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                 "status" : status,
                 "error"  : errors
             }
+            self.send_header('Content-Type', 'text/plain')
             self.end_headers()
             self.wfile.write(bytes(json.dumps(resp), 'utf-8'))
 
 
     def do_GET(self):
         self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
         print(self.path)
         if self.path == '/fuck_my_face' or self.path == '/tree':
             return self.send_tree()
@@ -56,6 +59,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.send_file('./clients/ft-web-client/build/index.html')
         else:
+            # ONLY PERTINENT TO SERVING THE STATIC COMPILED REACT WEB CLIENT
             if self.path.startswith('/static') or self.path == '/service-worker.js' or self.path == '/favicon.ico':
                 fullpath = './clients/ft-web-client/build' + self.path
             elif self.path[1:] in REACT_MANIFEST:
@@ -83,14 +87,14 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
 
     def send_tree(self):
-        self.send_header('Content-type', 'text/text')
+        self.send_header('Content-type', 'text/plain')
         self.end_headers()
         message = json.dumps(THE_TREE.toDict())
         self.wfile.write(bytes(message, 'utf-8'))
 
 
     def send_current(self):
-        self.send_header('Content-type', 'application/javascript')
+        self.send_header('Content-type', 'text/plain')
         self.end_headers()
         message = json.dumps({'current_task': "task"})
         self.wfile.write(bytes(str(THE_TREE.current_task), "utf-8"))
