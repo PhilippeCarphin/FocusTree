@@ -1,6 +1,7 @@
 import * as React from 'react';
 import './App.css';
 import DemoComponent from './components/demoComponent'
+import CommandForm from './components/commandForm'
 
 import logo from './logo.svg';
 
@@ -16,6 +17,9 @@ class App extends React.Component {
           To get started, edit <code>src/App.tsx</code> and save to reload.
         </p>
         <DemoComponent fmulp="Johnny" onLaserButtonClick={() => console.log("Lasers Activated Callback") } />
+        <CommandForm
+            handleFormSubmit={()=>console.log("HELLO FORM SUBMIT")}
+            ></CommandForm>
       </div>
     );
   }
