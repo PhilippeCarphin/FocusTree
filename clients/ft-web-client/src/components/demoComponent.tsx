@@ -1,4 +1,5 @@
 import './demoComponent.css'
+import JSONTree from 'react-json-tree';
 import * as React from 'react';
 
 interface IProps {
@@ -8,7 +9,7 @@ interface IProps {
 
 interface IState {
     value: string
-    tree?: object
+    tree: object
 }
 
 class DemoComponent extends React.Component<IProps, IState> {
@@ -65,15 +66,9 @@ class DemoComponent extends React.Component<IProps, IState> {
                     </label>
                     <input type="submit" value="submit"/>
                 </form>
-            <div className="DemoComponent-show-json">
-            {
-                // L'objectif est juste de voir la string produite par stringify pour qu'elle s'affiche comme dans la console
-                JSON.stringify(this.state.tree, null, 2).split("\n").map(
-                    (i,key) => <div className="DemoComponent-line" key={key}>{i}</div>
-                )
-
-            }
-            </div>
+                <div className="DemoComponent-container">
+                    <JSONTree data={this.state.tree}/>
+                </div>
             </div>
         );
     }
