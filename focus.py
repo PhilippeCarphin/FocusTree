@@ -1,21 +1,48 @@
 import datetime
 class TreeNode:
     def __init__(self, **kwargs):
-        self.children = []
+        # This node's stuff
         self.text = kwargs.get('text', 'this node')
+        self.done = False
+        self.created_on = kwargs.get(
+            'created_on',
+            datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)"))
+        self.finished_on = kwargs.get(
+            'finished_on',
+            'DOES NOT APPLY')
+
+        # Relationships with other nodes
+        self.children = []
         self.parent = None
         if kwargs.get("parent", None):
             kwargs["parent"].add_child(self)
-        self.done = False
         self.update_depth()
-        self.created_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
-        self.finished_on = "DOES NOT APPLY"
 
-    def toDict(self):
+    # For serializing to JSON
+    def to_dict(self):
         return {
             "text": self.text,
-            "children": [ c.toDict() for c in self.children]
+            "children": [ c.to_dict() for c in self.children],
+            "info": {
+                "done": str(self.done),
+                "created": str(self.created_on),
+                "finished": str(self.finished_on) if self.done else "task not finished"
+            }
         }
+
+    @staticmethod
+    def from_dict(d):
+        if not dict:
+            return TreeNode()
+
+        node_info = d["info"]
+        node = TreeNode(text=d["text"], created_on=node_info["created"], finished_on=node_info["finished"])
+
+        for c in d["children"]:
+            node.add_child(TreeNode.from_dict(c))
+
+        return node
+
 
     def update_depth(self):
         self.depth = self.parent.depth + 1 if self.parent else 0
@@ -67,11 +94,18 @@ class TreeManager:
             "next-task": self.next_task
         }
 
-    def toDict(self):
+    def to_dict(self):
         return {
-            "root_nodes": [r.toDict() for r in self.root_nodes],
+            "root_nodes": [r.to_dict() for r in self.root_nodes],
             "current_task": self.current_task.text if self.current_task is not None else "--NONE--"
         }
+
+    @staticmethod
+    def from_dict(d):
+        tm = TreeManager()
+        tm.root_nodes = [TreeNode.from_dict(rn) for rn in d["root_nodes"]]
+        tm.current_task = None
+        return tm
 
     def execute_command(self, command):
         words = command.split();

@@ -89,7 +89,10 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
     def send_tree(self):
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        message = json.dumps(THE_TREE.toDict())
+        hopefully_the_tree = focus.TreeManager.from_dict(THE_TREE.to_dict())
+        hopefully_the_tree.current_task = THE_TREE.current_task
+        message = json.dumps(hopefully_the_tree.to_dict())
+        # message = json.dumps(THE_TREE.to_dict())
         self.wfile.write(bytes(message, 'utf-8'))
 
 
