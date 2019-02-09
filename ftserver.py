@@ -7,9 +7,9 @@ ADDRESS = '0.0.0.0'
 
 THE_TREE = focus.TreeManager()
 
-a_root_node = focus.make_test_tree()
-THE_TREE.root_nodes.append(a_root_node)
-REACT_MANIFEST = {}
+# a_root_node = focus.make_test_tree()
+# THE_TREE.root_nodes.append(a_root_node)
+# REACT_MANIFEST = {}
 
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
