@@ -91,7 +91,7 @@ class TreeManager:
         elif operation in ["return", "done", "pop"]:
             self.done()
         else:
-            print("UNKNOWN COMMAND " + command)
+            print("UNKNOWN OPERATION " + operation)
             return
 
         self.check_if_done()
