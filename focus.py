@@ -90,7 +90,10 @@ class TreeNode:
         return None
 
     def __str__(self):
-        return self.text + f"[created: {self.created_on}, finished: {self.finished_on}]"
+        if self.done:
+            return self.text + f"[created: {self.created_on}, finished: {self.finished_on}]"
+        else:
+            return self.text + f"[created: {self.created_on}]"
 
     def print_ancestors(self):
         curr = self
@@ -205,9 +208,17 @@ class TreeManager:
             self.done(args)
         elif operation in ["reset"]:
             self.reset()
+        elif operation in ["tree", "current"]:
+            pass
         else:
             raise Exception("UNKNOWN OPERATION " + operation)
         self.update()
+        if operation in ["tree", "next-task"] or self.current_task is None:
+            term_output = self.print_tree()
+        else:
+            term_output = self.current_task.print_ancestors()
+
+        return term_output
 
     def reset(self):
         self.save_to_file('backup.json')

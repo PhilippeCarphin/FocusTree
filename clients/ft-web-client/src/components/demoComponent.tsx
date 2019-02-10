@@ -11,12 +11,13 @@ interface IState {
     value: string
     tree: object
     termOutput: string
+    errOutput: string
 }
 
 class DemoComponent extends React.Component<IProps, IState> {
     constructor(props: any){
         super(props);
-        this.state = {value: "Enter command", tree: {initial: "tree will go here"}, termOutput: ""};
+        this.state = {value: "Enter command", tree: {initial: "tree will go here"}, termOutput: "", errOutput: ""};
         fetch('http://localhost:5051/api/tree', {
             method:'GET',
             headers:{'Content-Type': 'text/plain'}
@@ -48,8 +49,11 @@ class DemoComponent extends React.Component<IProps, IState> {
                 let to = result['term_output'];
                 // to = to.replace('\n', 'ASDF<br>');
                 let ti = to.split('\n').map((i:any, key:any) => <div key={key}>{i}</div>);
-                this.setState({value:"", termOutput: ti });
+                this.setState({value:"", termOutput: ti , errOutput: ""});
+            } else {
+                this.setState({errOutput: result.error})
             }
+
         });
 
 
@@ -77,6 +81,9 @@ class DemoComponent extends React.Component<IProps, IState> {
                 <button onClick={this.props.onLaserButtonClick}>Activate Lasers</button>
                 <code className="DemoComponent-code">
                     {this.state.termOutput}
+                    <code className="DemoComponent-error">
+                        {this.state.errOutput}
+                    </code>
                 </code>
                 <form onSubmit={this.handleFormSubmit}>
                     <label>

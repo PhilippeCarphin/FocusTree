@@ -24,8 +24,9 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
             status = 'OK'
             errors = None
+            term_output = None
             try:
-                THE_TREE.execute_command(post_data)
+                term_output = THE_TREE.execute_command(post_data)
                 THE_TREE.save_to_file(save_file)
             except IndexError as e:
                 status = 'error'
@@ -41,7 +42,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                 resp = {
                     "command": post_data,
                     "status" : status,
-                    "term_output": THE_TREE.current_task.print_ancestors(),
+                    "term_output": term_output,
                     "error"  : errors
                 }
                 self.send_header('Access-Control-Allow-Origin', '*')
