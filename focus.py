@@ -2,10 +2,14 @@ import datetime
 import json
 
 class TreeNode:
+    TreeNode_Counter = 0
     def __init__(self, **kwargs):
         # This node's stuff
+        type(self).TreeNode_Counter += 1
+        print(self.TreeNode_Counter)
         self.text = kwargs.get('text', 'this node')
         self.done = kwargs.get('done', False)
+        self.id = kwargs.get('id', self.TreeNode_Counter)
         self.created_on = kwargs.get(
             'created_on',
             datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)"))
@@ -23,6 +27,7 @@ class TreeNode:
     # For serializing to JSON
     def to_dict(self):
         return {
+            "id": self.id,
             "text": self.text,
             "children": [ c.to_dict() for c in self.children],
             "info": {
@@ -38,7 +43,7 @@ class TreeNode:
             return TreeNode()
 
         node_info = d["info"]
-        node = TreeNode(text=d["text"], created_on=node_info["created"], finished_on=node_info["finished"], done=node_info['done'])
+        node = TreeNode(text=d["text"], created_on=node_info["created"], finished_on=node_info["finished"], done=node_info['done'], id=d["id"])
 
         for c in d["children"]:
             node.add_child(TreeNode.from_dict(c))
@@ -63,6 +68,15 @@ class TreeNode:
                 return False
 
         return self.done
+
+    def find_subtask_by_id(self, id):
+        if self.id == id:
+            return self
+        for c in self.children:
+            c_with_id = c.find_subtask_by_id(id)
+            if c_with_id != None:
+                return c_with_id
+        return None
 
     def __str__(self):
         indent = '|' + '----' * self.depth
@@ -99,12 +113,20 @@ class TreeManager:
     def to_dict(self):
         return {
             "root_nodes": [r.to_dict() for r in self.root_nodes],
+            "current_task_id": self.current_task.id if self.current_task else 0,
             "current_task": self.current_task.text if self.current_task is not None else "--NONE--"
         }
 
-    def find_current_task(self):
+    def find_task_by_id(self, id):
         """Depth first searches for the first leaf task it can find and sets it
         as the current task"""
+        if id == 0:
+            return None
+        for r in self.root_nodes:
+            task_with_id = r.find_subtask_by_id(id)
+            if task_with_id:
+                return task_with_id
+        return None
 
     def save_to_file(self, filename):
         with open(filename, 'w+') as f:
@@ -119,7 +141,7 @@ class TreeManager:
     def from_dict(d):
         tm = TreeManager()
         tm.root_nodes = [TreeNode.from_dict(rn) for rn in d["root_nodes"]]
-        tm.current_task = None
+        tm.current_task = tm.find_task_by_id(d["current_task_id"])
         return tm
 
     def execute_command(self, command):

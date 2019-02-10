@@ -30,22 +30,25 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             errors = None
             try:
                 THE_TREE.execute_command(post_data)
+                THE_TREE.save_to_file(save_file)
             except IndexError as e:
                 status = 'error'
                 errors = str(e)
             except Exception as e:
                 status = 'error'
                 errors = str(e)
+                raise e
+            finally:
 
-            resp = {
-                "command": post_data,
-                "status" : status,
-                "error"  : errors
-            }
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            self.wfile.write(bytes(json.dumps(resp), 'utf-8'))
+                resp = {
+                    "command": post_data,
+                    "status" : status,
+                    "error"  : errors
+                }
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(bytes(json.dumps(resp), 'utf-8'))
 
 
     def do_GET(self):
@@ -98,11 +101,10 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
     def send_tree(self):
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        hopefully_the_tree = focus.TreeManager.from_dict(THE_TREE.to_dict())
-        hopefully_the_tree.current_task = THE_TREE.current_task
-        THE_TREE.save_to_file(save_file)
-        message = json.dumps(hopefully_the_tree.to_dict())
-        # message = json.dumps(THE_TREE.to_dict())
+        # hopefully_the_tree = focus.TreeManager.from_dict(THE_TREE.to_dict())
+        # hopefully_the_tree.current_task = THE_TREE.current_task
+        # message = json.dumps(hopefully_the_tree.to_dict())
+        message = json.dumps(THE_TREE.to_dict())
         self.wfile.write(bytes(message, 'utf-8'))
 
 
