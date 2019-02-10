@@ -16,6 +16,14 @@ class DemoComponent extends React.Component<IProps, IState> {
     constructor(props: any){
         super(props);
         this.state = {value: "Enter command", tree: {initial: "tree will go here"}};
+        fetch('http://localhost:5051/tree', {
+            method:'GET',
+            headers:{'Content-Type': 'text/plain'}
+        }) .then((resp)=> resp.json())
+           .then((result)=>{
+               this.setState({tree: result});
+           });
+
         this.handleFormChange = this.handleFormChange.bind(this);
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
     }
@@ -45,9 +53,9 @@ class DemoComponent extends React.Component<IProps, IState> {
             method:'GET',
             headers:{'Content-Type': 'text/plain'}
         }) .then((resp)=> resp.json())
-            .then((result)=>{
-                this.setState({tree: result});
-            });
+           .then((result)=>{
+               this.setState({tree: result});
+           });
 
     }
 
