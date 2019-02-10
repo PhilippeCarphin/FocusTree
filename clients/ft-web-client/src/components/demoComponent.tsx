@@ -10,12 +10,13 @@ interface IProps {
 interface IState {
     value: string
     tree: object
+    termOutput: string
 }
 
 class DemoComponent extends React.Component<IProps, IState> {
     constructor(props: any){
         super(props);
-        this.state = {value: "Enter command", tree: {initial: "tree will go here"}};
+        this.state = {value: "Enter command", tree: {initial: "tree will go here"}, termOutput: ""};
         fetch('http://localhost:5051/api/tree', {
             method:'GET',
             headers:{'Content-Type': 'text/plain'}
@@ -44,7 +45,10 @@ class DemoComponent extends React.Component<IProps, IState> {
         }).then(result => {
             console.log(result);
             if(result.status === "OK"){
-                this.setState({"value":""});
+                let to = result['term_output'];
+                // to = to.replace('\n', 'ASDF<br>');
+                let ti = to.split('\n').map((i:any, key:any) => <div key={key}>{i}</div>);
+                this.setState({value:"", termOutput: ti });
             }
         });
 
@@ -71,6 +75,9 @@ class DemoComponent extends React.Component<IProps, IState> {
                 <p>The value of fmulp is {this.props.fmulp}</p>
                 <p>{this.calculateString()}</p>
                 <button onClick={this.props.onLaserButtonClick}>Activate Lasers</button>
+                <code className="DemoComponent-code">
+                    {this.state.termOutput}
+                </code>
                 <form onSubmit={this.handleFormSubmit}>
                     <label>
                         Name:

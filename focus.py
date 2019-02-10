@@ -86,14 +86,22 @@ class TreeNode:
         return None
 
     def __str__(self):
-        indent = '|' + '----' * self.depth
-        return indent + self.text + f"[created: {self.created_on}, finished: {self.finished_on}]"
+        return self.text + f"[created: {self.created_on}, finished: {self.finished_on}]"
 
-    def print_tree(self):
+    def print_tree(self, depth=0, prefix="\n"):
+        self.update_depth()
         lines = [str(self)]
+        i = 0
         for c in self.children:
-            lines.append(c.print_tree())
-        return '<br>'.join(lines)
+            i += 1
+            if len(self.children) > 1 and i < len(self.children):
+                new_prefix = prefix + "|   "
+            else:
+                new_prefix = prefix + "    "
+
+            lines.append(c.print_tree(depth+1, new_prefix))
+
+        return prefix.join(lines)
 
     def ancestors(self):
         ancestors = []

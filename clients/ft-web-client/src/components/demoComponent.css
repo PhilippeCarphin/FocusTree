@@ -2,3 +2,8 @@
     background-color: yellow;
     text-align: left;
 }
+
+.DemoComponent-code {
+    white-space: pre;
+    text-align: left;
+}
