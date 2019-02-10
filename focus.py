@@ -1,6 +1,10 @@
 import datetime
 import json
 
+class FocusTreeException(Exception):
+    pass
+
+
 class TreeNode:
     TreeNode_Counter = 0
     def __init__(self, **kwargs):
@@ -88,9 +92,12 @@ class TreeNode:
     def __str__(self):
         return self.text + f"[created: {self.created_on}, finished: {self.finished_on}]"
 
-    def print_tree(self, depth=0, prefix="\n"):
+    def print_tree(self, depth=0, prefix="\n   "):
         self.update_depth()
-        lines = [str(self)]
+        if depth == 0:
+            lines = [str(self)]
+        else:
+            lines = ['^---' + str(self)]
         i = 0
         for c in self.children:
             i += 1
