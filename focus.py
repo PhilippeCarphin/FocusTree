@@ -143,13 +143,10 @@ class TreeManager:
             print("UNKNOWN OPERATION " + operation)
             raise Exception("UNKNOWN OPERATION " + operation)
 
-        self.check_if_done()
+        self.update()
 
-    def check_if_done(self):
-        # CHECK IF WE ARE DONE (find next undone task if not)
+    def update(self):
         if self.current_task is None:
-            # Might be done, check that no tasks are not done,
-            # if we make it all the way through the loop, print and quit.
             for n in self.root_nodes:
                 if not n.is_done():
                     self.current_task = n
@@ -179,15 +176,9 @@ class TreeManager:
     def done(self):
         self.current_task.done = True
         if not self.current_task.is_done():
-            print("Cannot mark done, task has unfinished children")
             self.current_task.done = False
-            for c in self.current_task.children():
-                if not c.is_done():
-                    self.current_task = c
-                    break
-            else:
-                raise Exception("Can't happen, is_done() would have returned True")
-
+            print("Cannot mark done, task has unfinished children")
+            update()
         else:
             self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
             self.current_task = self.current_task.parent
