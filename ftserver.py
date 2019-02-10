@@ -14,7 +14,6 @@ THE_TREE = focus.TreeManager()
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
-        self.send_header('Access-Control-Allow-Origin', '*')
         if self.path == '/send-command':
             self.send_response(200)
             content_length = int(self.headers['Content-Length'])
@@ -34,7 +33,8 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                 "status" : status,
                 "error"  : errors
             }
-            self.send_header('Content-Type', 'text/plain')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Type', 'application/json')
             self.end_headers()
             self.wfile.write(bytes(json.dumps(resp), 'utf-8'))
 

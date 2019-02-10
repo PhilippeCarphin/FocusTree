@@ -24,15 +24,21 @@ class DemoComponent extends React.Component<IProps, IState> {
     }
 
     private handleFormSubmit(event: any){
-        console.log("Handling submit of form");
-        console.log(this.state.value);
         event.preventDefault();
         // from https://www.techiediaries.com/react-ajax/
         fetch('http://localhost:5051/send-command', {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain'},
             body: this.state.value
-        }).then((resp)=>{console.log(resp); return resp.json();});
+        }).then((resp)=>{
+            // console.log(resp.json());
+            return resp.json();
+        }).then(result => {
+            console.log(result);
+            if(result.status === "OK"){
+                this.setState({"value":""});
+            }
+        });
 
 
         fetch('http://localhost:5051/tree', {
@@ -40,8 +46,6 @@ class DemoComponent extends React.Component<IProps, IState> {
             headers:{'Content-Type': 'text/plain'}
         }) .then((resp)=> resp.json())
             .then((result)=>{
-                console.log(result);
-                console.log(JSON.stringify(result, null, 2));
                 this.setState({tree: result});
             });
 
