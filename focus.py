@@ -161,11 +161,18 @@ class TreeManager:
             self.subtask(args)
         elif operation in ["return", "done", "pop"]:
             self.done()
+        elif operation in ["reset"]:
+            self.reset()
         else:
             print("UNKNOWN OPERATION " + operation)
             raise Exception("UNKNOWN OPERATION " + operation)
 
         self.update()
+
+    def reset(self):
+        self.save_to_file('backup.json')
+        self.root_nodes = []
+        self.current_task = None
 
     def update(self):
         if self.current_task is None:
