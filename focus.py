@@ -8,6 +8,7 @@ class TreeNode:
         type(self).TreeNode_Counter += 1
         self.text = kwargs.get('text', 'this node')
         self.done = kwargs.get('done', False)
+        self.closing_notes = kwargs.get('closing_notes', None)
         self.id = kwargs.get('id', self.TreeNode_Counter)
         self.created_on = kwargs.get(
             'created_on',
@@ -31,6 +32,7 @@ class TreeNode:
             "children": [ c.to_dict() for c in self.children],
             "info": {
                 "done": self.done,
+                "closing_notes": self.closing_notes,
                 "created": str(self.created_on),
                 "finished": str(self.finished_on) if self.done else "task not finished"
             }
@@ -41,10 +43,20 @@ class TreeNode:
         if not dict:
             return TreeNode()
         node_info = d["info"]
-        node = TreeNode(text=d["text"], created_on=node_info["created"], finished_on=node_info["finished"], done=node_info['done'], id=d["id"])
+        node = TreeNode(text=d["text"], created_on=node_info["created"], finished_on=node_info["finished"], done=node_info['done'], id=d["id"], closing_notes=node_info["closing_notes"])
         for c in d["children"]:
             node.add_child(TreeNode.from_dict(c))
         return node
+
+    def to_org(self, starting_depth=1):
+        org_todo_keyword = 'DONE' if self.done else 'TODO'
+        output = '\n' + '*'*(self.depth + starting_depth) + ' ' + org_todo_keyword + ' ' + self.text + '\n'
+        output += 'created_on : ' + self.created_on + '\n'
+        output += 'finished_on : ' + self.finished_on + '\n'
+        output += ('closing_notes : ' + str(self.closing_notes) + '\n') if self.closing_notes else ''
+        output += '\n'.join([c.to_org(starting_depth) for c in self.children])
+        return output
+
 
     def update_depth(self):
         self.depth = self.parent.depth + 1 if self.parent else 0
@@ -111,6 +123,9 @@ class TreeManager:
             "current_task": self.current_task.text if self.current_task is not None else "--NONE--"
         }
 
+    def to_org(self, starting_depth=1):
+        return ''.join([r.to_org(starting_depth) for r in self.root_nodes])
+
     def find_task_by_id(self, id):
         """Depth first searches for the first leaf task it can find and sets it
         as the current task"""
@@ -149,12 +164,15 @@ class TreeManager:
             if not args:
                 raise IndexError("Missing Command : This command must have an argument")
             self.next_task(args)
+        elif operation in ['save-org']:
+            with open(args, 'w+') as f:
+                f.write(self.to_org())
         elif operation in [ "subtask", "call", "push"]:
             if not args:
                 raise IndexError("Missing Command : This command must have an argument")
             self.subtask(args)
         elif operation in ["return", "done", "pop"]:
-            self.done()
+            self.done(args)
         elif operation in ["reset"]:
             self.reset()
         else:
@@ -190,13 +208,14 @@ class TreeManager:
             self.root_nodes.append(new_task)
         self.current_task = new_task
 
-    def done(self):
+    def done(self, args):
         self.current_task.done = True
         if not self.current_task.is_done():
             self.current_task.done = False
             print("Cannot mark done, task has unfinished children")
             update()
         else:
+            self.current_task.closing_notes = args
             self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
             self.current_task = self.current_task.parent
 
