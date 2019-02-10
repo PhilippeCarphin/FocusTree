@@ -14,11 +14,17 @@ interface IState {
     errOutput: string
 }
 
+const url_prefix = (
+    process.env.NODE_ENV === "development"
+    ? 'http://localhost:5051'
+    : ''
+);
+
 class DemoComponent extends React.Component<IProps, IState> {
     constructor(props: any){
         super(props);
         this.state = {value: "Enter command", tree: {initial: "tree will go here"}, termOutput: "", errOutput: ""};
-        fetch('http://localhost:5051/api/tree', {
+        fetch(url_prefix + '/api/tree', {
             method:'GET',
             headers:{'Content-Type': 'text/plain'}
         }) .then((resp)=> resp.json())
@@ -36,7 +42,7 @@ class DemoComponent extends React.Component<IProps, IState> {
     private handleFormSubmit(event: any){
         event.preventDefault();
         // from https://www.techiediaries.com/react-ajax/
-        fetch('http://localhost:5051/api/send-command', {
+        fetch(url_prefix + '/api/send-command', {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain'},
             body: this.state.value
@@ -57,7 +63,7 @@ class DemoComponent extends React.Component<IProps, IState> {
         });
 
 
-        fetch('http://localhost:5051/api/tree', {
+        fetch(url_prefix + '/api/tree', {
             method:'GET',
             headers:{'Content-Type': 'text/plain'}
         }) .then((resp)=> resp.json())
