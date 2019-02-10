@@ -20,7 +20,7 @@ except:
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
-        if self.path == '/send-command':
+        if self.path == '/api/send-command':
             self.send_response(200)
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode('utf-8')
@@ -52,39 +52,62 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
 
     def do_GET(self):
+        print(self.path)
+        if self.path == '/':
+            return self.send_tree()
+        elif self.path.startswith('/api/'):
+            return self.serve_api()
+        elif self.path.startswith('/simple-client/'):
+            return self.serve_simple_client()
+        else:
+            return self.serve_static_react()
+
+    def serve_api(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
-        print(self.path)
-        if self.path == '/fuck_my_face' or self.path == '/tree':
+        if self.path == '/api/tree':
             return self.send_tree()
-        elif self.path == '/current-task':
-            print("CURRENT TASK")
+        elif self.path == '/api/current-task':
             return self.send_current()
-        elif self.path == '/files/main.js':
+
+    def serve_simple_client(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        if self.path == '/simple-client/main.js':
             self.send_javascript('main.js')
-        elif self.path == '/index.html':
+        elif self.path == '/simple-client/index.html':
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.send_file('index.html')
-        elif self.path == '/web-client':
-            self.send_header('Content-type', 'text/html')
-            self.end_headers()
-            self.send_file('./clients/ft-web-client/build/index.html')
+
+    def serve_static_react(self):
+        # SERVE FILES FOR REACT WEB CLIENT
+        react_file = os.path.normpath(
+            os.getcwd() + '/clients/ft-web-client/build/' + self.path
+            )
+        print("os.getcwd() = {}".format(os.getcwd()))
+        print("REACT_FILE = {}".format(react_file))
+        if   react_file.endswith('css'):
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/css')
+        elif react_file.endswith('js'):
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/javascript')
+        elif react_file.endswith('html'):
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+        elif react_file.endswith('.map'):
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+        elif react_file.endswith('svg'):
+            self.send_response(304)
+            self.send_header('Content-Type', 'text/plain')
+            pass
         else:
-            # ONLY PERTINENT TO SERVING THE STATIC COMPILED REACT WEB CLIENT
-            if self.path.startswith('/static') or self.path == '/service-worker.js' or self.path == '/favicon.ico':
-                fullpath = './clients/ft-web-client/build' + self.path
-            elif self.path[1:] in REACT_MANIFEST:
-                fullpath = self.path[1:]
-            if self.path.endswith('css'): ct = 'text/css'
-            elif self.path.endswith('js'): ct = 'text/javascript'
-            elif self.path.endswith('html'): ct = 'text/html'
-            elif self.path.endswith('svg'): ct = 'text/html'
-            else: ct = ''
-            self.send_header('Content-Type', ct)
-            self.end_headers()
-            # print("REACT MANIFEST: key:{}, value:{}".format(f,REACT_MANIFEST[f]))
-            self.send_file(fullpath)
+            self.send_header('Content-Type', 'text/plain')
+
+        self.end_headers()
+        self.send_file(react_file)
 
 
     def send_file(self, filename):
