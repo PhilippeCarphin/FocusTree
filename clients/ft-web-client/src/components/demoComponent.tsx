@@ -92,6 +92,13 @@ class DemoComponent extends React.Component<IProps, IState> {
                     </label>
                     <input type="submit" value="submit"/>
                 </form>
+                <code className="DemoComponent-code">
+                    <p>Certaines commandes sont de la forme</p>
+                    <p>commande une tache</p>
+                    <p>subtask une tache: creer la sous tache</p>
+
+                    <p>next-task une tache: creer une nouvelle tache de premier niveau</p>
+                </code>
                 <div className="DemoComponent-container">
                     <JSONTree data={this.state.tree}/>
                 </div>
