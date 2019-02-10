@@ -91,9 +91,9 @@ class TreeNode:
 
     def __str__(self):
         if self.done:
-            return self.text + f"[created: {self.created_on}, finished: {self.finished_on}]"
+            return self.text + "[created: {}, finished: {}]".format(self.created_on, self.finished_on)
         else:
-            return self.text + f"[created: {self.created_on}]"
+            return self.text + "[created: {}]".format(self.created_on)
 
     def print_ancestors(self):
         curr = self
