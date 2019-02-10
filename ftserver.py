@@ -27,6 +27,9 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             except IndexError as e:
                 status = 'error'
                 errors = str(e)
+            except Exception as e:
+                status = 'error'
+                errors = str(e)
 
             resp = {
                 "command": post_data,

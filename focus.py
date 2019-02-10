@@ -126,7 +126,7 @@ class TreeManager:
             self.done()
         else:
             print("UNKNOWN OPERATION " + operation)
-            return
+            raise Exception("UNKNOWN OPERATION " + operation)
 
         self.check_if_done()
 
