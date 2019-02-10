@@ -13,9 +13,6 @@ try:
 except:
     THE_TREE = focus.TreeManager()
 
-# a_root_node = focus.make_test_tree()
-# THE_TREE.root_nodes.append(a_root_node)
-# REACT_MANIFEST = {}
 
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
@@ -24,7 +21,6 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode('utf-8')
-            print(str(post_data))
 
             status = 'OK'
             errors = None
@@ -39,7 +35,6 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                 errors = str(e)
                 raise e
             finally:
-
                 resp = {
                     "command": post_data,
                     "status" : status,
@@ -85,8 +80,6 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         react_file = os.path.normpath(
             os.getcwd() + '/clients/ft-web-client/build/' + self.path
             )
-        print("os.getcwd() = {}".format(os.getcwd()))
-        print("REACT_FILE = {}".format(react_file))
         if   react_file.endswith('css'):
             self.send_response(200)
             self.send_header('Content-Type', 'text/css')
@@ -119,8 +112,6 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.send_file(filename)
 
-
-
     def send_tree(self):
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
@@ -130,21 +121,8 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         message = json.dumps(THE_TREE.to_dict())
         self.wfile.write(bytes(message, 'utf-8'))
 
-
-    def send_current(self):
-        self.send_header('Content-type', 'text/plain')
-        self.end_headers()
-        message = json.dumps({'current_task': "task"})
-        self.wfile.write(bytes(str(THE_TREE.current_task), "utf-8"))
-
-
-
 if __name__ == "__main__":
     try:
-
-        with open('./clients/ft-web-client/build/manifest.json') as f:
-            manifest = json.loads(f.read())
-        # Obviously, frankly, this should be done with an argparse thingy
         import sys
         if len(sys.argv) >= 3:
             if sys.argv[1] == '--port':
@@ -156,7 +134,6 @@ if __name__ == "__main__":
         )
 
         print("Server is started on {} port {}".format(ADDRESS, PORT_NUMBER))
-
         server.serve_forever()
 
     except KeyboardInterrupt:

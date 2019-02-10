@@ -6,7 +6,6 @@ class TreeNode:
     def __init__(self, **kwargs):
         # This node's stuff
         type(self).TreeNode_Counter += 1
-        print(self.TreeNode_Counter)
         self.text = kwargs.get('text', 'this node')
         self.done = kwargs.get('done', False)
         self.id = kwargs.get('id', self.TreeNode_Counter)
@@ -41,15 +40,11 @@ class TreeNode:
     def from_dict(d):
         if not dict:
             return TreeNode()
-
         node_info = d["info"]
         node = TreeNode(text=d["text"], created_on=node_info["created"], finished_on=node_info["finished"], done=node_info['done'], id=d["id"])
-
         for c in d["children"]:
             node.add_child(TreeNode.from_dict(c))
-
         return node
-
 
     def update_depth(self):
         self.depth = self.parent.depth + 1 if self.parent else 0
@@ -86,7 +81,6 @@ class TreeNode:
         lines = [str(self)]
         for c in self.children:
             lines.append(c.print_tree())
-
         return '<br>'.join(lines)
 
     def ancestors(self):
@@ -164,9 +158,7 @@ class TreeManager:
         elif operation in ["reset"]:
             self.reset()
         else:
-            print("UNKNOWN OPERATION " + operation)
             raise Exception("UNKNOWN OPERATION " + operation)
-
         self.update()
 
     def reset(self):
@@ -180,15 +172,11 @@ class TreeManager:
                 if not n.is_done():
                     self.current_task = n
                     break
-            else:
-                print("EVERYTHING IS DONE")
-                self.print_tree()
 
     def print_tree(self):
         lines = []
         for n in self.root_nodes:
             lines.append(n.print_tree())
-
         return '->' + '\n->'.join(lines)
 
     def next_task(self, task):
@@ -224,7 +212,6 @@ if __name__ == "__main__":
     b = TreeNode()
     c = TreeNode()
     a.add_child(b)
-    print("INPUT : " + input("say something"))
     try:
         a.remove_child(c)
     except ValueError:
