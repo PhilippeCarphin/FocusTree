@@ -92,6 +92,21 @@ class TreeNode:
     def __str__(self):
         return self.text + f"[created: {self.created_on}, finished: {self.finished_on}]"
 
+    def print_ancestors(self):
+        curr = self
+        chain = [self]
+        while curr.parent:
+            chain.append(curr.parent)
+            curr = curr.parent
+
+        output = str(chain.pop())
+        prefix = "\n"
+        for a in reversed(chain):
+            output += prefix +  ' ^--' + str(a)
+            prefix += "    "
+
+        return output
+
     def print_tree(self, depth=0, prefix="\n   "):
         self.update_depth()
         if depth == 0:
