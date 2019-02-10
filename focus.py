@@ -5,7 +5,7 @@ class TreeNode:
     def __init__(self, **kwargs):
         # This node's stuff
         self.text = kwargs.get('text', 'this node')
-        self.done = False
+        self.done = kwargs.get('done', False)
         self.created_on = kwargs.get(
             'created_on',
             datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)"))
@@ -26,7 +26,7 @@ class TreeNode:
             "text": self.text,
             "children": [ c.to_dict() for c in self.children],
             "info": {
-                "done": str(self.done),
+                "done": self.done,
                 "created": str(self.created_on),
                 "finished": str(self.finished_on) if self.done else "task not finished"
             }
@@ -38,7 +38,7 @@ class TreeNode:
             return TreeNode()
 
         node_info = d["info"]
-        node = TreeNode(text=d["text"], created_on=node_info["created"], finished_on=node_info["finished"])
+        node = TreeNode(text=d["text"], created_on=node_info["created"], finished_on=node_info["finished"], done=node_info['done'])
 
         for c in d["children"]:
             node.add_child(TreeNode.from_dict(c))
