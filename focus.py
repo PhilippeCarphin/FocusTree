@@ -1,4 +1,6 @@
 import datetime
+import json
+
 class TreeNode:
     def __init__(self, **kwargs):
         # This node's stuff
@@ -99,6 +101,19 @@ class TreeManager:
             "root_nodes": [r.to_dict() for r in self.root_nodes],
             "current_task": self.current_task.text if self.current_task is not None else "--NONE--"
         }
+
+    def find_current_task(self):
+        """Depth first searches for the first leaf task it can find and sets it
+        as the current task"""
+
+    def save_to_file(self, filename):
+        with open(filename, 'w+') as f:
+            f.write(json.dumps(self.to_dict(), indent=4, sort_keys=True))
+
+    @staticmethod
+    def load_from_file(filename):
+        with open(filename, 'r') as f:
+            return TreeManager.from_dict(json.loads(f.read()))
 
     @staticmethod
     def from_dict(d):

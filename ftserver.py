@@ -1,11 +1,17 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import os.path
 import focus
 
+save_file = os.path.expanduser('~/.focus-tree.json')
 PORT_NUMBER = 5051
 ADDRESS = '0.0.0.0'
 
 THE_TREE = focus.TreeManager()
+try:
+    THE_TREE = focus.TreeManager.load_from_file(save_file)
+except:
+    THE_TREE = focus.TreeManager()
 
 # a_root_node = focus.make_test_tree()
 # THE_TREE.root_nodes.append(a_root_node)
@@ -94,6 +100,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         hopefully_the_tree = focus.TreeManager.from_dict(THE_TREE.to_dict())
         hopefully_the_tree.current_task = THE_TREE.current_task
+        THE_TREE.save_to_file(save_file)
         message = json.dumps(hopefully_the_tree.to_dict())
         # message = json.dumps(THE_TREE.to_dict())
         self.wfile.write(bytes(message, 'utf-8'))
