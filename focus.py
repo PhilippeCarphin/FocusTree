@@ -1,9 +1,11 @@
 import datetime
 import json
+import mailtool
 
 class FocusTreeException(Exception):
     pass
 
+HOTMAIL = mailtool.make_hotmail_connection()
 
 class TreeNode:
     TreeNode_Counter = 0
@@ -200,6 +202,17 @@ class TreeManager:
         elif operation in ['save-org']:
             with open(args, 'w+') as f:
                 f.write(self.to_org())
+        elif operation in ['send-org']:
+            with open('focus-tree.org', 'w+') as f:
+                f.write(self.to_org())
+            mailtool.send_mail_connected(
+                'phil103@hotmail.com',
+                args,
+                'FocusTree: Your tree',
+                'Current contents of your tree',
+                HOTMAIL,
+                'focus-tree.org',
+                )
         elif operation in [ "subtask", "call", "push"]:
             if not args:
                 raise IndexError("Missing Command : This command must have an argument")

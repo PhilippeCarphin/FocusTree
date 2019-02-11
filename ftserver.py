@@ -2,16 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os.path
 import focus
-
-save_file = os.path.expanduser('~/.focus-tree.json')
-PORT_NUMBER = 5051
-ADDRESS = '0.0.0.0'
-
-THE_TREE = focus.TreeManager()
-try:
-    THE_TREE = focus.TreeManager.load_from_file(save_file)
-except:
-    THE_TREE = focus.TreeManager()
+import mailtool
 
 
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
@@ -128,17 +119,28 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     try:
+
+        ADDRESS = '0.0.0.0'
+
+        PORT_NUMBER = 5051
         import sys
         if len(sys.argv) >= 3:
             if sys.argv[1] == '--port':
                 PORT_NUMBER = int(sys.argv[2])
+
+        save_file = os.path.expanduser('~/.focus-tree_{}.json'.format(PORT_NUMBER))
+        THE_TREE = focus.TreeManager()
+        try:
+            THE_TREE = focus.TreeManager.load_from_file(save_file)
+        except:
+            THE_TREE = focus.TreeManager()
 
         server = HTTPServer(
             (ADDRESS, PORT_NUMBER),
             FocusTreeRequestHandler
         )
 
-        print("Server is started on {} port {}".format(ADDRESS, PORT_NUMBER))
+        print("Server is started on {} port {}, save file is {}".format(ADDRESS, PORT_NUMBER, save_file))
         server.serve_forever()
 
     except KeyboardInterrupt:
