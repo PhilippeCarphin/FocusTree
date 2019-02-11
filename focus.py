@@ -286,7 +286,7 @@ class TreeManager:
         if not self.current_task.is_done():
             self.current_task.done = False
             print("Cannot mark done, task has unfinished children")
-            update()
+            self.update()
         else:
             self.current_task.closing_notes = args
             self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
