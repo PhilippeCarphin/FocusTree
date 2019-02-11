@@ -137,9 +137,22 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     try:
 
-        ADDRESS = '0.0.0.0'
-
+        SERVER_ADDRESS = '0.0.0.0'
         PORT_NUMBER = 5051
+        import sys
+        i = 1
+        while i < len(sys.argv):
+            if sys.argv[i] == '--port':
+                i+=1
+                PORT_NUMBER = int(sys.argv[i])
+            elif sys.argv[i] == '--host':
+                i+=1
+                SERVER_ADDRESS = sys.argv[i]
+            else:
+                print(colored("Unrecognized command line option {}".format(sys.argv[i]), 'red'))
+                quit(1)
+            i += 1
+
         import sys
         if len(sys.argv) >= 3:
             if sys.argv[1] == '--port':
@@ -153,13 +166,12 @@ if __name__ == "__main__":
             THE_TREE = focus.TreeManager()
 
         server = HTTPServer(
-            (ADDRESS, PORT_NUMBER),
+            (SERVER_ADDRESS, PORT_NUMBER),
             FocusTreeRequestHandler
         )
-
         HOTMAIL = mailtool.make_hotmail_connection()
 
-        print("Server is started on {} port {}, save file is {}".format(ADDRESS, PORT_NUMBER, save_file))
+        print("Server is started on {} port {}, save file is {}".format(SERVER_ADDRESS, PORT_NUMBER, save_file))
         server.serve_forever()
 
     except KeyboardInterrupt:
