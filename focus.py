@@ -193,7 +193,7 @@ class TreeManager:
         words = command.split();
         if not words:
             raise IndexError("Missing Command: Must supply a command")
-        operation = words[0]
+        operation = words[0].lower()
         args = ' '.join(words[1:])
         print("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
         if operation in ["enqueue", "next-task"]:

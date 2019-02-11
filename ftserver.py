@@ -19,7 +19,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             server_commands = ['send-org']
             try:
                 words = command_line.split();
-                operation = words[0]
+                operation = words[0].lower()
                 args = ' '.join(words[1:])
                 if operation not in server_commands:
                     term_output = THE_TREE.execute_command(command_line)
