@@ -65,7 +65,10 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         elif self.path.startswith('/simple-client/'):
             return self.serve_simple_client()
         else:
-            return self.serve_static_react()
+            try:
+                return self.serve_static_react()
+            except FileNotFoundError as e:
+                print("serving static react: " + str(e))
 
     def serve_api(self):
         self.send_response(200)
