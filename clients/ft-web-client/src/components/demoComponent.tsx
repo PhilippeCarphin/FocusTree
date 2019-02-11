@@ -81,13 +81,15 @@ class DemoComponent extends React.Component<IProps, IState> {
                 <h1>Hello World</h1>
                 <p>The value of fmulp is {this.props.fmulp}</p>
                 <p>{this.calculateString()}</p>
-                <button onClick={this.props.onLaserButtonClick}>Activate Lasers</button>
-                <code className="DemoComponent-code">
-                    {this.state.termOutput}
-                    <code className="DemoComponent-error">
-                        {this.state.errOutput}
+                <div><button onClick={this.props.onLaserButtonClick}>Activate Lasers</button></div>
+                <div className="DemoComponent-code" >
+                    <code className="DemoComponent-code">
+                        {this.state.termOutput}
+                        <code className="DemoComponent-error">
+                            {this.state.errOutput}
+                        </code>
                     </code>
-                </code>
+                </div>
                 <form onSubmit={this.handleFormSubmit}>
                     <label>
                         Name:
