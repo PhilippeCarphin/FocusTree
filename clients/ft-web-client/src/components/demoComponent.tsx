@@ -23,14 +23,10 @@ const url_prefix = (
 class DemoComponent extends React.Component<IProps, IState> {
     constructor(props: any){
         super(props);
-        this.state = {value: "Enter command", tree: {initial: "tree will go here"}, termOutput: "", errOutput: ""};
-        fetch(url_prefix + '/api/tree', {
-            method:'GET',
-            headers:{'Content-Type': 'text/plain'}
-        }) .then((resp)=> resp.json())
-           .then((result)=>{
-               this.setState({tree: result});
-           });
+        this.state = {value: "current", tree: {initial: "tree will go here"}, termOutput: "", errOutput: ""};
+
+        this.fetchTree().then((result)=> this.setState({tree: result}));
+        this.sendCommand('current').then((result) => {this.setState({termOutput: result.term_output})});
 
         this.handleFormChange = this.handleFormChange.bind(this);
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
@@ -39,17 +35,28 @@ class DemoComponent extends React.Component<IProps, IState> {
         return "a member function returned this";
     }
 
-    private handleFormSubmit(event: any){
-        event.preventDefault();
-        // from https://www.techiediaries.com/react-ajax/
-        fetch(url_prefix + '/api/send-command', {
+    private sendCommand(command: string){
+        return fetch(url_prefix + '/api/send-command', {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain'},
-            body: this.state.value
+            body: command
         }).then((resp)=>{
             // console.log(resp.json());
             return resp.json();
-        }).then(result => {
+        })
+    }
+
+    private fetchTree(){
+        return fetch(url_prefix + '/api/tree', {
+            method:'GET',
+            headers:{'Content-Type': 'text/plain'}
+        }) .then((resp)=> resp.json())
+    }
+
+    private handleFormSubmit(event: any){
+        event.preventDefault();
+        // from https://www.techiediaries.com/react-ajax/
+        this.sendCommand(this.state.value).then(result => {
             console.log(result);
             if(result.status === "OK"){
                 let to = result['term_output'];
@@ -60,17 +67,7 @@ class DemoComponent extends React.Component<IProps, IState> {
                 this.setState({errOutput: result.error})
             }
 
-        });
-
-
-        fetch(url_prefix + '/api/tree', {
-            method:'GET',
-            headers:{'Content-Type': 'text/plain'}
-        }) .then((resp)=> resp.json())
-           .then((result)=>{
-               this.setState({tree: result});
-           });
-
+        }).then(()=>this.fetchTree());
     }
 
     private handleFormChange(event: any){
