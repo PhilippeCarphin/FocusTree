@@ -45,7 +45,9 @@ def REPL():
     while True:
         try:
             loop()
-        except REPLDoneError as e:
+        except REPLDoneError:
+            break
+        except KeyboardInterrupt:
             break
 
 def get_tree():
