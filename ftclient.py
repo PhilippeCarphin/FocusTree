@@ -6,8 +6,14 @@ from termcolor import colored
 SERVER_PORT = 8181
 SERVER_ADDRESS = 'localhost'
 
+class REPLDoneError(Exception):
+    pass
+
 def read_command():
-    return input(colored('FocusTree> ', 'green'))
+    try:
+        return input(colored('FocusTree> ', 'green'))
+    except EOFError as e:
+        raise REPLDoneError("EOF entered")
 
 def eval_command(command_line):
     payload = command_line if command_line != '' else 'current'
@@ -37,7 +43,10 @@ def loop():
 
 def REPL():
     while True:
-        loop()
+        try:
+            loop()
+        except REPLDoneError as e:
+            break
 
 def get_tree():
     resp = requests.get('http://{}:{}/api/tree'.format(SERVER_ADDRESS, PORT_NUMBER))
