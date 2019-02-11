@@ -3,9 +3,6 @@ import requests
 import focus
 from termcolor import colored
 
-SERVER_PORT = 8181
-SERVER_ADDRESS = 'localhost'
-
 class REPLDoneError(Exception):
     pass
 
@@ -24,9 +21,12 @@ def eval_command(command_line):
         if operation == 'save-org':
             resp = save_org_command(words[1:])
     else:
-        resp = requests.post(
-            'http://{}:{}/api/send-command'.format(SERVER_ADDRESS, PORT_NUMBER),
-            data=payload).json()
+        request_url = 'http://{}:{}/api/send-command' .format(
+            SERVER_ADDRESS,
+            PORT_NUMBER
+            )
+        print(request_url)
+        resp = requests.post(request_url, data=payload).json()
     return resp
 
 def print_output(resp):
@@ -49,7 +49,9 @@ def REPL():
             break
 
 def get_tree():
-    resp = requests.get('http://{}:{}/api/tree'.format(SERVER_ADDRESS, PORT_NUMBER))
+    request_url = 'http://{}:{}/api/tree'.format(SERVER_ADDRESS, PORT_NUMBER)
+    print(request_url)
+    resp = requests.get(request_url)
     return focus.TreeManager.from_dict(resp.json())
 
 def save_org_command(filename):
@@ -68,10 +70,22 @@ def save_org_command(filename):
 
 if __name__ == "__main__":
     PORT_NUMBER = 5051
+    SERVER_ADDRESS = 'localhost'
+
     import sys
-    if len(sys.argv) >= 3:
-        if sys.argv[1] == '--port':
-            PORT_NUMBER = int(sys.argv[2])
+    i = 1
+    while i < len(sys.argv):
+        if sys.argv[i] == '--port':
+            i+=1
+            PORT_NUMBER = int(sys.argv[i])
+        elif sys.argv[i] == '--host':
+            i+=1
+            SERVER_ADDRESS = sys.argv[i]
+        else:
+            print(colored("Unrecognized command line option {}".format(sys.argv[i]), 'red'))
+            quit(1)
+        i += 1
+
 
     tree = get_tree()
     print(tree.printable_tree())
