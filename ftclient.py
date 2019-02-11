@@ -64,6 +64,6 @@ if __name__ == "__main__":
             PORT_NUMBER = int(sys.argv[2])
 
     tree = get_tree()
-    print(tree.print_tree())
+    print(tree.printable_tree())
 
     REPL()

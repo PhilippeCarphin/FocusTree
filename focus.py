@@ -95,7 +95,7 @@ class TreeNode:
         else:
             return self.text + "[created: {}]".format(self.created_on)
 
-    def print_ancestors(self):
+    def printable_ancestors(self):
         curr = self
         chain = [self]
         while curr.parent:
@@ -110,7 +110,7 @@ class TreeNode:
 
         return output
 
-    def print_tree(self, depth=0, prefix="\n   "):
+    def printable_tree(self, depth=0, prefix="\n   "):
         self.update_depth()
         if depth == 0:
             lines = [str(self)]
@@ -124,7 +124,7 @@ class TreeNode:
             else:
                 new_prefix = prefix + "    "
 
-            lines.append(c.print_tree(depth+1, new_prefix))
+            lines.append(c.printable_tree(depth+1, new_prefix))
 
         return prefix.join(lines)
 
@@ -215,9 +215,9 @@ class TreeManager:
             raise Exception("UNKNOWN OPERATION " + operation)
         self.update()
         if operation in ["tree", "next-task"] or self.current_task is None:
-            term_output = self.print_tree()
+            term_output = self.printable_tree()
         else:
-            term_output = self.current_task.print_ancestors()
+            term_output = self.current_task.printable_ancestors()
 
         return term_output
 
@@ -233,10 +233,10 @@ class TreeManager:
                     self.current_task = n
                     break
 
-    def print_tree(self):
+    def printable_tree(self):
         lines = []
         for n in self.root_nodes:
-            lines.append(n.print_tree())
+            lines.append(n.printable_tree())
         return '->' + '\n->'.join(lines)
 
     def next_task(self, task):
