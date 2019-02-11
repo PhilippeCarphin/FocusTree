@@ -11,14 +11,31 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         if self.path == '/api/send-command':
             self.send_response(200)
             content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length).decode('utf-8')
+            command_line = self.rfile.read(content_length).decode('utf-8')
 
             status = 'OK'
             errors = None
             term_output = None
+            server_commands = ['send-org']
             try:
-                term_output = THE_TREE.execute_command(post_data)
-                THE_TREE.save_to_file(save_file)
+                words = command_line.split();
+                operation = words[0]
+                args = ' '.join(words[1:])
+                if operation not in server_commands:
+                    term_output = THE_TREE.execute_command(command_line)
+                    THE_TREE.save_to_file(save_file)
+                else:
+                    if operation in ['send-org']:
+                        with open('focus-tree.org', 'w+') as f:
+                            f.write(THE_TREE.to_org())
+                        mailtool.send_mail_connected(
+                            'phil103@hotmail.com',
+                            args,
+                            'FocusTree: Your tree',
+                            'Current contents of your tree',
+                            HOTMAIL,
+                            'focus-tree.org',
+                            )
             except IndexError as e:
                 status = 'error'
                 errors = str(e)
@@ -31,7 +48,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                 raise e
             finally:
                 resp = {
-                    "command": post_data,
+                    "command": command_line,
                     "status" : status,
                     "term_output": term_output,
                     "error"  : errors
@@ -139,6 +156,8 @@ if __name__ == "__main__":
             (ADDRESS, PORT_NUMBER),
             FocusTreeRequestHandler
         )
+
+        HOTMAIL = mailtool.make_hotmail_connection()
 
         print("Server is started on {} port {}, save file is {}".format(ADDRESS, PORT_NUMBER, save_file))
         server.serve_forever()
