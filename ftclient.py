@@ -1,3 +1,4 @@
+import os
 import requests
 import focus
 from termcolor import colored
@@ -10,10 +11,17 @@ def read_command():
 
 def eval_command(command_line):
     payload = command_line if command_line != '' else 'current'
-    resp = requests.post(
-        'http://{}:{}/api/send-command'.format(SERVER_ADDRESS, PORT_NUMBER),
-        data=payload)
-    return resp.json()
+    words = command_line.split()
+    operation = words[0]
+    client_commands = ['save-org']
+    if operation in client_commands:
+        if operation == 'save-org':
+            resp = save_org_command(words[1:])
+    else:
+        resp = requests.post(
+            'http://{}:{}/api/send-command'.format(SERVER_ADDRESS, PORT_NUMBER),
+            data=payload).json()
+    return resp
 
 def print_output(resp):
     if resp['status'] != 'OK':
@@ -33,6 +41,20 @@ def REPL():
 def get_tree():
     resp = requests.get('http://{}:{}/api/tree'.format(SERVER_ADDRESS, PORT_NUMBER))
     return focus.TreeManager.from_dict(resp.json())
+
+def save_org_command(filename):
+    pass
+    the_tree = get_tree()
+    name = ''.join(words[1:])
+    with open(name, 'w+') as f:
+        f.write(the_tree.to_org())
+    return {
+        'command': command_line,
+        'status': 'OK',
+        'error': None,
+        'term_output': 'saved file {}'.format(os.getcwd() + '/' + name),
+        'term_error':''
+        }
 
 if __name__ == "__main__":
     PORT_NUMBER = 5051
