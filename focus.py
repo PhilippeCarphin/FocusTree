@@ -90,10 +90,12 @@ class TreeNode:
         return None
 
     def __str__(self):
+        first_part = self.text + " (id={})[created: {}".format(self.id, self.created_on)
         if self.done:
-            return self.text + "[created: {}, finished: {}]".format(self.created_on, self.finished_on)
+            finished = " finished: {}".format(self.created_on, self.finished_on)
         else:
-            return self.text + "[created: {}]".format(self.created_on)
+            finished = ""
+        return first_part + finished + ']'
 
     def printable_ancestors(self):
         curr = self
@@ -211,15 +213,26 @@ class TreeManager:
             self.reset()
         elif operation in ["tree", "current"]:
             pass
+        elif operation in ["switch-task"]:
+            self.switch_task(int(args))
+        elif operation in ['reassign-ids']:
+            self.reassign_ids()
         else:
             raise Exception("UNKNOWN OPERATION " + operation)
+
         self.update()
+
         if operation in ["tree", "next-task"] or self.current_task is None:
             term_output = self.printable_tree()
         else:
             term_output = self.current_task.printable_ancestors()
 
         return term_output
+
+    def switch_task(self, id):
+        self.current_task = self.find_task_by_id(id)
+        print('setting current task to :{} (id={})'.format(self.current_task.text, self.current_task.id))
+        return self.current_task
 
     def reset(self):
         self.save_to_file('backup.json')
@@ -232,6 +245,24 @@ class TreeManager:
                 if not n.is_done():
                     self.current_task = n
                     break
+
+    def reassign_ids(self):
+        current_id = 0
+
+        def visit(n, func):
+            func(n)
+            for c in n.children:
+                visit(c, func)
+
+        def give_id(n):
+            nonlocal current_id
+            current_id += 1
+            n.id = current_id
+
+        for r in self.root_nodes:
+            visit(r, give_id)
+
+        TreeNode.TreeNode_Counter = current_id + 1
 
     def printable_tree(self):
         lines = []
