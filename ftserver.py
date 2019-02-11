@@ -36,9 +36,6 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                             HOTMAIL,
                             'focus-tree.org',
                             )
-            except IndexError as e:
-                status = 'error'
-                errors = str(e)
             except focus.FocusTreeException as e:
                 status = 'error'
                 errors = str(e)

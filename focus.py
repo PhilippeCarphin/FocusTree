@@ -192,20 +192,20 @@ class TreeManager:
     def execute_command(self, command):
         words = command.split();
         if not words:
-            raise IndexError("Missing Command: Must supply a command")
+            raise FocusTreeException("Missing Command: Must supply a command")
         operation = words[0].lower()
         args = ' '.join(words[1:])
         print("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
         if operation in ["enqueue", "next-task"]:
             if not args:
-                raise IndexError("Missing Command : This command must have an argument")
+                raise FocusTreeException("Missing Command : This command must have an argument")
             self.next_task(args)
         elif operation in ['save-org']:
             with open(args, 'w+') as f:
                 f.write(self.to_org())
         elif operation in [ "subtask", "call", "push"]:
             if not args:
-                raise IndexError("Missing Command : This command must have an argument")
+                raise FocusTreeException("Missing Command : This command must have an argument")
             self.subtask(args)
         elif operation in ["return", "done", "pop"]:
             self.done(args)
@@ -218,7 +218,7 @@ class TreeManager:
         elif operation in ['reassign-ids']:
             self.reassign_ids()
         else:
-            raise Exception("UNKNOWN OPERATION " + operation)
+            raise FocusTreeException("UNKNOWN OPERATION " + operation)
 
         self.update()
 
