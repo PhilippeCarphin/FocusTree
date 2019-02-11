@@ -157,7 +157,8 @@ class TreeManager:
         }
 
     def to_org(self, starting_depth=1):
-        return ''.join([r.to_org(starting_depth) for r in self.root_nodes])
+        title = '#+TITLE: FocusTree exported on{}\n\n'.format(datetime.datetime.now())
+        return title + ''.join([r.to_org(starting_depth) for r in self.root_nodes])
 
     def find_task_by_id(self, id):
         """Depth first searches for the first leaf task it can find and sets it
