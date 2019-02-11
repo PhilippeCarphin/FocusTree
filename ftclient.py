@@ -30,6 +30,7 @@ def print_output(resp):
 
 def loop():
     command_line = read_command()
+    if command_line == '': return
     resp = eval_command(command_line)
     if resp:
         print_output(resp)
