@@ -16,7 +16,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             status = 'OK'
             errors = None
             term_output = None
-            server_commands = ['send-org']
+            server_commands = ['send-org', 'so']
             try:
                 words = command_line.split();
                 operation = words[0].lower()
@@ -25,7 +25,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                     term_output = THE_TREE.execute_command(command_line)
                     THE_TREE.save_to_file(save_file)
                 else:
-                    if operation in ['send-org']:
+                    if operation in ['so', 'send-org']:
                         with open('focus-tree.org', 'w+') as f:
                             f.write(THE_TREE.to_org())
                         mailtool.send_mail_connected(

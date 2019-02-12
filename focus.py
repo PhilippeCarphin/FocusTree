@@ -197,28 +197,28 @@ class TreeManager:
         operation = words[0].lower()
         args = ' '.join(words[1:])
         print("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
-        if operation in ["enqueue", "next-task"]:
+        if operation in ["next-task", 'nt']:
             if not args:
                 raise FocusTreeException("Missing Command : This command must have an argument")
             self.next_task(args)
-        elif operation in ['new-task']:
+        elif operation in ['new-task', 'net']:
             if not args:
                 raise FocusTreeException("Missing Command : This command must have an argument")
             self.new_task(args)
-        elif operation in ['save-org']:
+        elif operation in ['save-org', 'so']:
             with open(args, 'w+') as f:
                 f.write(self.to_org())
-        elif operation in [ "subtask", "call", "push"]:
+        elif operation in [ 'st', "subtask", "call", "push"]:
             if not args:
                 raise FocusTreeException("Missing Command : This command must have an argument")
             self.subtask(args)
-        elif operation in ['subtask-by-id']:
+        elif operation in ['stbi', 'subtask-by-id']:
             self.subtask_by_id(words)
         elif operation in ["return", "done", "pop"]:
             self.done(args)
         elif operation in ["reset"]:
             self.reset()
-        elif operation in ["tree", "current"]:
+        elif operation in ['t', "tree", "current"]:
             pass
         elif operation in ["switch-task"]:
             self.switch_task(int(args))
@@ -227,7 +227,7 @@ class TreeManager:
         else:
             raise FocusTreeException("UNKNOWN OPERATION " + operation)
 
-        if operation in ["tree", "next-task", "new-task"] or self.current_task is None:
+        if operation in ['t', "tree", 'nt', "next-task", 'net', "new-task"] or self.current_task is None:
             term_output = self.printable_tree()
         else:
             term_output = self.current_task.printable_ancestors()
