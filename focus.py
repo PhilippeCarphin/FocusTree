@@ -19,7 +19,7 @@ class TreeNode:
             datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)"))
         self.finished_on = kwargs.get(
             'finished_on',
-            'DOES NOT APPLY')
+            None)
 
         # Relationships with other nodes
         self.children = []
@@ -38,7 +38,7 @@ class TreeNode:
                 "done": self.done,
                 "closing_notes": self.closing_notes,
                 "created": str(self.created_on),
-                "finished": str(self.finished_on) if self.done else "task not finished"
+                "finished": str(self.finished_on) if self.done else None
             }
         }
 
