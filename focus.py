@@ -90,7 +90,7 @@ class TreeNode:
         return None
 
     def __str__(self):
-        first_part = self.text + " (id={})[created: {}".format(self.id, self.created_on)
+        first_part = self.text + " (id={},{})[created: {}".format(self.id, self.done, self.created_on)
         if self.done:
             finished = " finished: {}".format(self.created_on, self.finished_on)
         else:
@@ -226,8 +226,6 @@ class TreeManager:
         else:
             raise FocusTreeException("UNKNOWN OPERATION " + operation)
 
-        self.update()
-
         if operation in ["tree", "next-task", "new-task"] or self.current_task is None:
             term_output = self.printable_tree()
         else:
@@ -261,11 +259,37 @@ class TreeManager:
         self.current_task = None
 
     def update(self):
-        if self.current_task is None:
-            for n in self.root_nodes:
-                if not n.is_done():
-                    self.current_task = n
+        def find_not_done_dfs(n):
+            if n is None:
+                return None
+
+            for c in n.children:
+                res = find_not_done_dfs(c)
+                if res:
+                    return res
+            else:
+                if not n.done:
+                    return n
+                else:
+                    return None
+
+        cursor = self.current_task
+        result = find_not_done_dfs(cursor)
+
+        while not result and cursor and cursor.parent:
+            cursor = cursor.parent
+            result = find_not_done_dfs(cursor)
+            if result:
+                break
+        else:
+            for r in self.root_nodes:
+                result = find_not_done_dfs(r)
+                if result:
                     break
+
+        self.current_task = result
+
+
 
     def reassign_ids(self):
         current_id = 0
@@ -309,15 +333,16 @@ class TreeManager:
         self.current_task = new_task
 
     def done(self, args):
+        if self.current_task is None:
+            raise FocusTreeException("No current task")
         self.current_task.done = True
         if not self.current_task.is_done():
             self.current_task.done = False
-            print("Cannot mark done, task has unfinished children")
-            self.update()
+            raise FocusTreeException("Cannot mark done, task has unfinished children")
         else:
             self.current_task.closing_notes = args
             self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
-            self.current_task = self.current_task.parent
+            self.update()
 
 def make_test_tree():
     root = TreeNode(text="This is the root node of the tree")
