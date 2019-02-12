@@ -92,7 +92,7 @@ class TreeNode:
     def __str__(self):
         first_part = self.text + " (id={},{})[created: {}".format(self.id, self.done, self.created_on)
         if self.done:
-            finished = " finished: {}".format(self.created_on, self.finished_on)
+            finished = " finished: {}".format(self.finished_on)
         else:
             finished = ""
         return first_part + finished + ']'
