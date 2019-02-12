@@ -200,6 +200,10 @@ class TreeManager:
             if not args:
                 raise FocusTreeException("Missing Command : This command must have an argument")
             self.next_task(args)
+        elif operation in ['new-task']:
+            if not args:
+                raise FocusTreeException("Missing Command : This command must have an argument")
+            self.new_task(args)
         elif operation in ['save-org']:
             with open(args, 'w+') as f:
                 f.write(self.to_org())
@@ -207,6 +211,8 @@ class TreeManager:
             if not args:
                 raise FocusTreeException("Missing Command : This command must have an argument")
             self.subtask(args)
+        elif operation in ['subtask-by-id']:
+            self.subtask_by_id(words)
         elif operation in ["return", "done", "pop"]:
             self.done(args)
         elif operation in ["reset"]:
@@ -222,12 +228,27 @@ class TreeManager:
 
         self.update()
 
-        if operation in ["tree", "next-task"] or self.current_task is None:
+        if operation in ["tree", "next-task", "new-task"] or self.current_task is None:
             term_output = self.printable_tree()
         else:
             term_output = self.current_task.printable_ancestors()
 
         return term_output
+
+    def subtask_by_id(self, words):
+        try:
+            id = int(words[1])
+        except ValueError:
+            raise FocusTreeException("Second argument must be an id")
+        except IndexError:
+            raise FocusTreeException("This command requires an id and then some text")
+        task = self.find_task_by_id(id)
+        if not task:
+            raise FocusTreeException("Task with id {} was not found.".format(id))
+        task_text = ''.join(words[2:])
+        if not task_text:
+            raise FocusTreeException("This command requires text after the id")
+        task.add_child(TreeNode(text=task_text))
 
     def switch_task(self, id):
         self.current_task = self.find_task_by_id(id)
@@ -271,6 +292,12 @@ class TreeManager:
         return '->' + '\n->'.join(lines)
 
     def next_task(self, task):
+        if self.current_task:
+            self.current_task.parent.add_child(TreeNode(text=task))
+        else:
+            self.new_task(task)
+
+    def new_task(self, task):
         self.root_nodes.append(TreeNode(text=task))
 
     def subtask(self, task):
