@@ -19,7 +19,8 @@ def eval_command(command_line):
     client_commands = ['save-org']
     if operation in client_commands:
         if operation == 'save-org':
-            resp = save_org_command(words[1:])
+            the_tree = get_tree()
+            resp = save_org_command(''.join(words[1:]), the_tree)
     else:
         request_url = 'http://{}:{}/api/send-command' .format(
             SERVER_ADDRESS,
@@ -56,17 +57,14 @@ def get_tree():
     resp = requests.get(request_url)
     return focus.TreeManager.from_dict(resp.json())
 
-def save_org_command(filename):
-    pass
-    the_tree = get_tree()
-    name = ''.join(words[1:])
-    with open(name, 'w+') as f:
-        f.write(the_tree.to_org())
+def save_org_command(filename, tree):
+    with open(filename, 'w+') as f:
+        f.write(tree.to_org())
     return {
-        'command': command_line,
+        'command': 'save-org ' + filename,
         'status': 'OK',
         'error': None,
-        'term_output': 'saved file {}'.format(os.getcwd() + '/' + name),
+        'term_output': 'saved file {}'.format(os.getcwd() + '/' + filename),
         'term_error':''
         }
 

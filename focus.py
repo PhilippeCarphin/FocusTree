@@ -53,11 +53,12 @@ class TreeNode:
         return node
 
     def to_org(self, starting_depth=1):
+        self.update_depth()
         org_todo_keyword = 'DONE' if self.done else 'TODO'
         output = '\n' + '*'*(self.depth + starting_depth) + ' ' + org_todo_keyword + ' ' + self.text + '\n'
         output += 'created_on : ' + self.created_on + '\n'
-        output += 'finished_on : ' + self.finished_on + '\n'
         output += ('closing_notes : ' + str(self.closing_notes) + '\n') if self.closing_notes else ''
+        output += 'finished_on : ' + str( self.finished_on ) + '\n'
         output += '\n'.join([c.to_org(starting_depth) for c in self.children])
         return output
 
