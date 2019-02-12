@@ -139,15 +139,20 @@ if __name__ == "__main__":
 
         SERVER_ADDRESS = '0.0.0.0'
         PORT_NUMBER = 5051
+        USE_HOTMAIL = False
+
         import sys
         i = 1
         while i < len(sys.argv):
-            if sys.argv[i] == '--port':
+            opt = sys.argv[i]
+            if opt == '--port':
                 i+=1
                 PORT_NUMBER = int(sys.argv[i])
-            elif sys.argv[i] == '--host':
+            elif opt == '--host':
                 i+=1
                 SERVER_ADDRESS = sys.argv[i]
+            elif opt == '--with-email':
+                USE_HOTMAIL = True
             else:
                 print(colored("Unrecognized command line option {}".format(sys.argv[i]), 'red'))
                 quit(1)
@@ -169,7 +174,11 @@ if __name__ == "__main__":
             (SERVER_ADDRESS, PORT_NUMBER),
             FocusTreeRequestHandler
         )
-        HOTMAIL = mailtool.make_hotmail_connection()
+        if USE_HOTMAIL:
+            HOTMAIL = mailtool.make_hotmail_connection()
+        else:
+            HOTMAIL = None
+
 
         print("Server is started on {} port {}, save file is {}".format(SERVER_ADDRESS, PORT_NUMBER, save_file))
         server.serve_forever()
