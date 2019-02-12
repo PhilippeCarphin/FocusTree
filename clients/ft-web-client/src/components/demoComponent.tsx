@@ -23,16 +23,13 @@ const url_prefix = (
 class DemoComponent extends React.Component<IProps, IState> {
     constructor(props: any){
         super(props);
-        this.state = {value: "current", tree: {initial: "tree will go here"}, termOutput: "", errOutput: ""};
+        this.state = {value: "current", tree: {}, termOutput: "", errOutput: "ERROR : Probably couldn't connect to a server"};
 
-        this.fetchTree().then((result)=> this.setState({tree: result}));
+        this.fetchTree().then((result)=> this.setState({tree: result['root_nodes'], errOutput: ""}));
         this.sendCommand('current').then((result) => {this.setState({termOutput: result.term_output})});
 
         this.handleFormChange = this.handleFormChange.bind(this);
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
-    }
-    private calculateString(){
-        return "a member function returned this";
     }
 
     private sendCommand(command: string){
@@ -78,32 +75,24 @@ class DemoComponent extends React.Component<IProps, IState> {
     public render() {
         return (
             <div>
-                <h1>Hello World</h1>
-                <p>The value of fmulp is {this.props.fmulp}</p>
-                <p>{this.calculateString()}</p>
-                <div><button onClick={this.props.onLaserButtonClick}>Activate Lasers</button></div>
                 <div className="DemoComponent-code" >
                     <code className="DemoComponent-code">
                         {this.state.termOutput}
-                        <code className="DemoComponent-error">
-                            {this.state.errOutput}
-                        </code>
+                    </code>
+                </div>
+                <div className="DemoComponent-error">
+                    <code className="DemoComponent-error">
+                        {this.state.errOutput}
                     </code>
                 </div>
                 <form onSubmit={this.handleFormSubmit}>
                     <label>
-                        Name:
+                        Enter command:
                         <input type="text" value={this.state.value} onChange={this.handleFormChange}/>
                     </label>
                     <input type="submit" value="submit"/>
                 </form>
-                <code className="DemoComponent-code">
-                    <p>Certaines commandes sont de la forme</p>
-                    <p>commande une tache</p>
-                    <p>subtask une tache: creer la sous tache</p>
-
-                    <p>next-task une tache: creer une nouvelle tache de premier niveau</p>
-                </code>
+                <a href="/help.html">Click Here for help</a>
                 <div className="DemoComponent-container">
                     <JSONTree data={this.state.tree}/>
                 </div>

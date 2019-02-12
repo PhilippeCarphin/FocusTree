@@ -1,7 +1,7 @@
 import * as React from 'react';
 import './App.css';
 import DemoComponent from './components/demoComponent'
-import CommandForm from './components/commandForm'
+// import CommandForm from './components/commandForm'
 
 import logo from './logo.svg';
 
@@ -11,15 +11,9 @@ class App extends React.Component {
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
+          <h1 className="App-title">Welcome to FocusTree</h1>
         </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.tsx</code> and save to reload.
-        </p>
         <DemoComponent fmulp="Johnny" onLaserButtonClick={() => console.log("Lasers Activated Callback") } />
-        <CommandForm
-            handleFormSubmit={()=>console.log("HELLO FORM SUBMIT")}
-            ></CommandForm>
       </div>
     );
   }
