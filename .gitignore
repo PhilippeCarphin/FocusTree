@@ -1,2 +1,4 @@
 readme.html
 node_modules
+*.org
+*.json
