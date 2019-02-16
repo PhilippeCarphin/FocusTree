@@ -16,11 +16,14 @@ def eval_command(command_line):
     payload = command_line if command_line != '' else 'current'
     words = command_line.split()
     operation = words[0]
-    client_commands = ['save-org']
+    client_commands = ['save-org', 'clear']
     if operation in client_commands:
         if operation == 'save-org':
             the_tree = get_tree()
             resp = save_org_command(''.join(words[1:]), the_tree)
+        elif operation == 'clear':
+            os.system('clear')
+            resp = {'status':'OK', 'term_output': ''}
     else:
         request_url = 'http://{}:{}/api/send-command' .format(
             SERVER_ADDRESS,
