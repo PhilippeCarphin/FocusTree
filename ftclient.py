@@ -30,7 +30,7 @@ def eval_command(command_line):
             PORT_NUMBER
             )
         print(request_url)
-        resp = requests.post(request_url, data=payload).json()
+        resp = requests.post(request_url, data=bytes(payload, 'utf-8')).json()
     return resp
 
 def print_output(resp):
