@@ -3,6 +3,7 @@
 import os
 import requests
 import focus
+import json
 from termcolor import colored
 import argparse
 
@@ -19,7 +20,8 @@ def eval_command(command_line):
     payload = command_line if command_line != '' else 'current'
     words = command_line.split()
     operation = words[0]
-    client_commands = ['save-org', 'clear']
+    client_commands = ['save-org', 'clear', 'save-file', 'send-file']
+    print("operation = {}".format(operation))
     if operation in client_commands:
         if operation == 'save-org':
             the_tree = get_tree()
@@ -27,12 +29,23 @@ def eval_command(command_line):
         elif operation == 'clear':
             os.system('clear')
             resp = {'status':'OK', 'term_output': ''}
+        elif operation == 'save-file':
+            the_tree = get_tree()
+            the_tree.save_to_file(words[1])
+            resp = {'status':'OK', 'term_output': ''}
+        elif operation == 'send-file':
+            request_url = 'http://{}:{}/api/send-tree'.format(
+                program_options.host,
+                program_options.port
+                )
+            tree = focus.TreeManager.load_from_file(words[1])
+            payload = bytes(json.dumps(tree.to_dict()), 'utf-8')
+            resp = requests.post(request_url, data=payload).json()
     else:
         request_url = 'http://{}:{}/api/send-command' .format(
             program_options.host,
             program_options.port
             )
-        print(request_url)
         resp = requests.post(request_url, data=bytes(payload, 'utf-8')).json()
     return resp
 

@@ -8,15 +8,18 @@ import mailtool
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
+        global THE_TREE
+        status = 'OK'
+        errors = None
+        term_output = None
+        term_error = None
+
         if self.path == '/api/send-command':
             self.send_response(200)
             content_length = int(self.headers['Content-Length'])
             command_line = self.rfile.read(content_length).decode('utf-8')
 
-            status = 'OK'
-            errors = None
-            term_output = None
-            server_commands = ['send-org', 'so']
+            server_commands = ['send-org', 'so', 'save-file']
             try:
                 words = command_line.split();
                 operation = words[0].lower()
@@ -35,7 +38,12 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                             'Current contents of your tree',
                             HOTMAIL,
                             'focus-tree.org',
-                            )
+                        )
+                    elif operation in ['save-file']:
+                        THE_TREE.save_to_file(args)
+                    elif operation in ['load-file']:
+                        THE_TREE = focus.TreeManager.load_from_file(args)
+
             except focus.FocusTreeException as e:
                 status = 'error'
                 errors = str(e)
@@ -54,6 +62,25 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(bytes(json.dumps(resp), 'utf-8'))
+
+        elif self.path == '/api/send-tree':
+            self.send_response(200)
+            content_length = int(self.headers['Content-Length'])
+            tree_json = self.rfile.read(content_length).decode('utf-8')
+
+            print(tree_json)
+            THE_TREE = focus.TreeManager.from_dict(json.loads(tree_json))
+            THE_TREE.save_to_file(save_file)
+            resp = {
+                "command": '/api/send-tree',
+                "status" : status,
+                "term_output": "Loaded tree",
+                "error"  : errors
+            }
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(bytes(json.dumps(resp), 'utf-8'))
 
 
     def do_GET(self):
