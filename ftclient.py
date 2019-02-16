@@ -80,7 +80,7 @@ def command_line_parser():
     p.add_argument("-p", "--port", type=int, help="Port of the server")
     p.add_argument("--host", help="Address of the server")
     p.add_argument("-v", "--verbose", action="store_true", help="Address of the server")
-    p.add_argument("args", nargs='*')
+    p.add_argument("ft_command", nargs='*', help="(optional) The command to send to focus tree, no command will launch an interactive client")
     return p.parse_args()
 
 def get_options():
@@ -108,4 +108,9 @@ if __name__ == "__main__":
     if program_options.verbose:
         print("FocusTree client using http://{}:{}".format(program_options.host, program_options.port))
 
-    REPL()
+    print(program_options)
+    if program_options.ft_command:
+        resp = eval_command(' '.join(program_options.ft_command))
+        print_output(resp)
+    else:
+        REPL()
