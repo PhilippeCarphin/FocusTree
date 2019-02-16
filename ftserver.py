@@ -59,6 +59,8 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         print(self.path)
         if self.path == '/':
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
             return self.send_tree()
         elif self.path.startswith('/api/'):
             return self.serve_api()
