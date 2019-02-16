@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
+
 import os
 import requests
 import focus
 from termcolor import colored
+import argparse
 
 class REPLDoneError(Exception):
     pass
@@ -26,8 +29,8 @@ def eval_command(command_line):
             resp = {'status':'OK', 'term_output': ''}
     else:
         request_url = 'http://{}:{}/api/send-command' .format(
-            SERVER_ADDRESS,
-            PORT_NUMBER
+            program_options.host,
+            program_options.port
             )
         print(request_url)
         resp = requests.post(request_url, data=bytes(payload, 'utf-8')).json()
@@ -55,7 +58,7 @@ def REPL():
             break
 
 def get_tree():
-    request_url = 'http://{}:{}/api/tree'.format(SERVER_ADDRESS, PORT_NUMBER)
+    request_url = 'http://{}:{}/api/tree'.format(program_options.host, program_options.port)
     print(request_url)
     resp = requests.get(request_url)
     return focus.TreeManager.from_dict(resp.json())
@@ -71,26 +74,38 @@ def save_org_command(filename, tree):
         'term_error':''
         }
 
-if __name__ == "__main__":
-    PORT_NUMBER = 5051
-    SERVER_ADDRESS = 'localhost'
 
-    import sys
-    i = 1
-    while i < len(sys.argv):
-        if sys.argv[i] == '--port':
-            i+=1
-            PORT_NUMBER = int(sys.argv[i])
-        elif sys.argv[i] == '--host':
-            i+=1
-            SERVER_ADDRESS = sys.argv[i]
+def command_line_parser():
+    p = argparse.ArgumentParser()
+    p.add_argument("-p", "--port", type=int, help="Port of the server")
+    p.add_argument("--host", help="Address of the server")
+    p.add_argument("-v", "--verbose", action="store_true", help="Address of the server")
+    p.add_argument("args", nargs='*')
+    return p.parse_args()
+
+def get_options():
+    cl_opts = command_line_parser()
+    if not cl_opts.port:
+        if 'FOCUS_TREE_PORT' in os.environ:
+            if cl_opts.verbose:
+                print(colored('Getting port from from environment variable FOCUS_TREE_PORT', 'yellow'))
+            cl_opts.port = int(os.environ['FOCUS_TREE_PORT'])
         else:
-            print(colored("Unrecognized command line option {}".format(sys.argv[i]), 'red'))
-            quit(1)
-        i += 1
+            cl_opts.port = 5051
+    if not cl_opts.host:
+        if 'FOCUS_TREE_HOST' in os.environ:
+            if cl_opts.verbose:
+                print(colored('Getting host from from environment variable FOCUS_TREE_HOST', 'yellow'))
+            cl_opts.host = os.environ['FOCUS_TREE_HOST']
+        else:
+            cl_opts.host = '0.0.0.0'
+    return cl_opts
 
+if __name__ == "__main__":
 
-    tree = get_tree()
-    print(tree.printable_tree())
+    program_options = get_options()
+
+    if program_options.verbose:
+        print("FocusTree client using http://{}:{}".format(program_options.host, program_options.port))
 
     REPL()
