@@ -1,9 +1,9 @@
-console.log("MAIN.JS");
 
 const displayErrors = function(errorMessage){
     document.getElementById('errors').innerHTML = errorMessage;
 };
 
+console.log("MAIN.JS")
 
 let sendCommand = function(){
     let req = new XMLHttpRequest();
@@ -39,7 +39,7 @@ let updateTreeView = function(){
     req.open('GET', '/fuck_my_face');
     req.send();
 };
-// updateTreeView();
+updateTreeView();
 
 let updateCurrentTask = function(){
     const req = new XMLHttpRequest();
@@ -53,4 +53,4 @@ let updateCurrentTask = function(){
     };
     req.send();
 };
-// updateCurrentTask();
+updateCurrentTask();
