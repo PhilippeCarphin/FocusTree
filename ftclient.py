@@ -61,6 +61,16 @@ def loop():
     if resp:
         print_output(resp)
 
+def read_config_file():
+    file = fs_parent_search('.focustree.json')
+    if file:
+        with open(file) as f:
+            config = json.loads(f.read())
+            config['config_file'] = file
+            return config
+    else:
+        return {}
+
 def REPL():
     while True:
         try:
@@ -87,6 +97,19 @@ def save_org_command(filename, tree):
         'term_error':''
         }
 
+def fs_parent_search(filename):
+    directory = os.getcwd()
+    while True:
+        file = os.path.join(directory, filename)
+        if os.path.exists(file):
+            return file
+        if directory == '/':
+            return None
+        directory = os.path.split(directory)[0]
+
+    return None
+
+
 
 def command_line_parser():
     p = argparse.ArgumentParser()
@@ -98,20 +121,29 @@ def command_line_parser():
 
 def get_options():
     cl_opts = command_line_parser()
+    config = read_config_file()
+
+    def get_value(key, default=None, t=str):
+        env_var = 'FOCUS_TREE_' + key.upper()
+        if key in config:
+            if cl_opts.verbose:
+                print(colored('Getting {} from from config file {}'.format(key, config['config_file']), 'yellow'))
+            return t(config[key])
+        elif env_var in os.environ:
+            if cl_opts.verbose:
+                print(colored('Getting {} from from environment variable {}'.format(key, env_var), 'yellow'))
+            return t(os.environ[env_var])
+        else:
+            if cl_opts.verbose:
+                print(colored('Getting {} from hardcoded value {}'.format(key, default), 'yellow'))
+
+            return default
+
     if not cl_opts.port:
-        if 'FOCUS_TREE_PORT' in os.environ:
-            if cl_opts.verbose:
-                print(colored('Getting port from from environment variable FOCUS_TREE_PORT', 'yellow'))
-            cl_opts.port = int(os.environ['FOCUS_TREE_PORT'])
-        else:
-            cl_opts.port = 5051
+        cl_opts.port = get_value('port', 5051, int)
     if not cl_opts.host:
-        if 'FOCUS_TREE_HOST' in os.environ:
-            if cl_opts.verbose:
-                print(colored('Getting host from from environment variable FOCUS_TREE_HOST', 'yellow'))
-            cl_opts.host = os.environ['FOCUS_TREE_HOST']
-        else:
-            cl_opts.host = '0.0.0.0'
+        cl_opts.host = get_value('host', 'localhost')
+
     return cl_opts
 
 if __name__ == "__main__":
