@@ -147,16 +147,18 @@ class TreeManager:
         self.root_nodes = []
         self.current_task = None
         self.commands = {
-            'next-task': {'handler': self.next_task, 'help': 'help for this task'},
-            'new-task': {'handler': self.new_task, 'help': 'help for this task'},
-            'save-org': {'handler': self.save_org , 'help': 'help for this task'},
-            'subtask': {'handler': self.subtask, 'help': 'help for this task'},
-            'done': {'handler': self.done , 'help': 'help for this task'},
-            'reset': {'handler': lambda args : self.reset(), 'help': 'help for this task'},
-            'switch-task': {'handler': self.switch_task, 'help': 'help for this task'},
-            'tree' : { 'handler': lambda args: None , 'help': 'help for this task'},
-            'subtask-by-id': {'handler': self.subtask_by_id, 'help': 'help for this task'},
-            'reassign-ids': {'handler': lambda args: self.reassign_ids(), 'help': 'help for this task'},
+            'next-task': {'handler': self.next_task, 'help': 'Create a new sibling of current_task'},
+            'new-task': {'handler': self.new_task, 'help': 'Create new root task'},
+            'save-org': {'handler': self.save_org , 'help': 'Save as org mode file'},
+            'subtask': {'handler': self.subtask, 'help': 'Create and enter new subtask of current task'},
+            'done': {'handler': self.done , 'help': 'Mark current task as done and move to the next task in DFS order'},
+            'reset': {'handler': lambda args : self.reset(), 'help': 'Clear the tree completely'},
+            'switch-task': {'handler': self.switch_task, 'help': 'switch to the task (by id)'},
+            'tree' : { 'handler': lambda args: None , 'help': 'Show the entire tree'},
+            'subtask-by-id': {'handler': self.subtask_by_id, 'help': 'create subtask of task with id (subtask-by-id <an id> the text of the task)'},
+            'reassign-ids': {'handler': lambda args: self.reassign_ids(), 'help': 'Reassing all ids in case something weird happened'},
+            'current' : {'handler' : lambda args : None, 'help': 'Show the current context'},
+            'help': {'handler': lambda args: None, 'help': 'Show this thing'},
         }
 
     @staticmethod
@@ -222,6 +224,9 @@ class TreeManager:
 
         if operation in ['t', "tree", 'nt', "next-task", 'net', "new-task"] or self.current_task is None:
             term_output = self.printable_tree()
+        elif operation in ['help']:
+            # TODO Fix This!!
+            term_output = json.dumps(TreeManager.meta_dict(), indent=4, sort_keys=True)
         else:
             term_output = self.current_task.printable_ancestors()
 
@@ -360,14 +365,4 @@ def make_test_tree():
     return root
 
 if __name__ == "__main__":
-    a = TreeNode()
-    b = TreeNode()
-    c = TreeNode()
-    a.add_child(b)
-    try:
-        a.remove_child(c)
-    except ValueError:
-        pass
-
-    run()
-
+    pass
