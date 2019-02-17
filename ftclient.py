@@ -6,13 +6,19 @@ import focus
 import json
 from termcolor import colored
 import argparse
+from pygments.lexers.shell import BashSessionLexer, BashLexer
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import WordCompleter, FuzzyWordCompleter
+from prompt_toolkit.lexers import PygmentsLexer
+from prompt_toolkit.styles import style_from_pygments_cls, Style
 
 class REPLDoneError(Exception):
     pass
 
-def read_command():
+def read_command(prompt):
     try:
-        return input(colored('FocusTree> ', 'green'))
+        return prompt()
     except EOFError as e:
         raise REPLDoneError("EOF entered")
 
@@ -54,8 +60,8 @@ def print_output(resp):
         print(colored('ERROR : ' + resp['error'], 'red'))
     print(resp['term_output'])
 
-def loop():
-    command_line = read_command()
+def loop(prompt_sesh):
+    command_line = read_command(prompt_sesh)
     if command_line == '': return
     resp = eval_command(command_line)
     if resp:
@@ -72,13 +78,54 @@ def read_config_file():
         return {}
 
 def REPL():
+    prompt = make_prompt_session()
     while True:
         try:
-            loop()
+            loop(prompt)
         except REPLDoneError:
             break
         except KeyboardInterrupt:
             break
+
+def make_prompt_session():
+    ft_completer = FuzzyWordCompleter([
+        'subtask', 'new-task', 'switch-task', 'next-task', 'subtask-by-id', 'tree'
+    ])
+    prompt_style = Style.from_dict({
+        'prompt': '#00aa00'
+    })
+    prompt_string = [
+        ('class:username', 'FocusTree> ')
+    ]
+    bindings = KeyBindings()
+    @bindings.add('c-j')
+    def _(event):
+        event.current_buffer.complete_next()
+    @bindings.add('c-k')
+    def _(event):
+        event.current_buffer.complete_previous()
+    @bindings.add('tab')
+    def _(event):
+        # THIS IS THE GETTO-EST THING EVER, DON'T JUDGE ME!
+        # I just want it to select the currently highlighted
+        # completion.  It could continue completing after.
+        current_buffer = event.app.current_buffer
+        compl = current_buffer.text
+        current_buffer.cancel_completion()
+        current_buffer.text = ''
+        current_buffer.insert_text(compl + ' ')
+
+    prompt_sesh = PromptSession(
+        completer=ft_completer,
+        reserve_space_for_menu=8,
+        lexer=PygmentsLexer(BashLexer),
+        key_bindings=bindings,
+        style=prompt_style
+    )
+    def prompt():
+        return prompt_sesh.prompt([('class:username', 'FocusTree> ')])
+
+    return prompt
 
 def get_tree():
     request_url = 'http://{}:{}/api/tree'.format(program_options.host, program_options.port)
