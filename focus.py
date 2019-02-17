@@ -147,21 +147,26 @@ class TreeManager:
         self.root_nodes = []
         self.current_task = None
         self.commands = {
-            'next-task': {'handler': self.next_task},
-            'new-task': {'handler': self.new_task},
-            'save-org': {'handler': self.save_org },
-            'subtask': {'handler': self.subtask},
-            'done': {'handler': self.done },
-            'reset': {'handler': lambda args : self.reset()},
-            'switch-task': {'handler': self.switch_task},
-            'tree' : { 'handler': lambda args: None },
-            'subtask-by-id': {'handler': self.subtask_by_id},
-            'reassign-ids': {'handler': lambda args: self.reassign_ids()},
+            'next-task': {'handler': self.next_task, 'help': 'help for this task'},
+            'new-task': {'handler': self.new_task, 'help': 'help for this task'},
+            'save-org': {'handler': self.save_org , 'help': 'help for this task'},
+            'subtask': {'handler': self.subtask, 'help': 'help for this task'},
+            'done': {'handler': self.done , 'help': 'help for this task'},
+            'reset': {'handler': lambda args : self.reset(), 'help': 'help for this task'},
+            'switch-task': {'handler': self.switch_task, 'help': 'help for this task'},
+            'tree' : { 'handler': lambda args: None , 'help': 'help for this task'},
+            'subtask-by-id': {'handler': self.subtask_by_id, 'help': 'help for this task'},
+            'reassign-ids': {'handler': lambda args: self.reassign_ids(), 'help': 'help for this task'},
         }
 
     @staticmethod
     def command_list():
         return list(TreeManager().commands.keys())
+
+    @staticmethod
+    def meta_dict():
+        commands = TreeManager().commands
+        return {key: commands[key]["help"] for key in commands} 
 
     def to_dict(self):
         return {
