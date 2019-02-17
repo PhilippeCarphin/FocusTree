@@ -47,7 +47,14 @@ class TreeNode:
         if not dict:
             return TreeNode()
         node_info = d["info"]
-        node = TreeNode(text=d["text"], created_on=node_info["created"], finished_on=node_info["finished"], done=node_info['done'], id=d["id"], closing_notes=node_info["closing_notes"])
+        node = TreeNode(
+            text=d["text"],
+            created_on=node_info["created"],
+            finished_on=node_info["finished"],
+            done=node_info['done'],
+            id=d["id"],
+            closing_notes=node_info["closing_notes"]
+        )
         for c in d["children"]:
             node.add_child(TreeNode.from_dict(c))
         return node
@@ -55,9 +62,10 @@ class TreeNode:
     def to_org(self, starting_depth=1):
         self.update_depth()
         org_todo_keyword = 'DONE' if self.done else 'TODO'
-        output = '\n' + '*'*(self.depth + starting_depth) + ' ' + org_todo_keyword + ' ' + self.text + '\n'
+        stars = '\n' + '*'*(self.depth + starting_depth)
+        output = stars + ' ' + org_todo_keyword + ' ' + self.text + '\n'
         output += 'created_on : ' + self.created_on + '\n'
-        output += ('closing_notes : ' + str(self.closing_notes) + '\n') if self.closing_notes else ''
+        output += 'closing_notes : ' + str(self.closing_notes) + '\n'
         output += 'finished_on : ' + str( self.finished_on ) + '\n'
         output += '\n'.join([c.to_org(starting_depth) for c in self.children])
         return output
@@ -91,7 +99,9 @@ class TreeNode:
         return None
 
     def __str__(self):
-        first_part = self.text + " (id={},{})[created: {}".format(self.id, self.done, self.created_on)
+        first_part = self.text + " (id={},{})[created: {}".format(
+            self.id, self.done, self.created_on
+        )
         if self.done:
             finished = " finished: {}".format(self.finished_on)
         else:
@@ -174,7 +184,8 @@ class TreeManager:
         return {
             "root_nodes": [r.to_dict() for r in self.root_nodes],
             "current_task_id": self.current_task.id if self.current_task else 0,
-            "current_task": self.current_task.text if self.current_task is not None else "--NONE--"
+            "current_task": self.current_task.text
+                                 if self.current_task is not None else "--NONE--"
         }
 
     def to_org(self, starting_depth=1):
@@ -224,7 +235,7 @@ class TreeManager:
 
         if operation in ['help']:
             term_output = json.dumps(TreeManager.meta_dict(), indent=4, sort_keys=True)
-        elif operation in ['t', "tree", 'nt', "next-task", 'net', "new-task"] or self.current_task is None:
+        elif operation in ["tree", "next-task", "new-task"] or self.current_task is None:
             term_output = self.printable_tree()
         else:
             term_output = self.current_task.printable_ancestors()
@@ -254,7 +265,8 @@ class TreeManager:
     def switch_task(self, args):
         id = int(args)
         self.current_task = self.find_task_by_id(id)
-        print('setting current task to :{} (id={})'.format(self.current_task.text, self.current_task.id))
+        print('setting current task to :{} (id={})'
+              .format(self.current_task.text, self.current_task.id))
         return self.current_task
 
     def reset(self):
