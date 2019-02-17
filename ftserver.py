@@ -183,7 +183,8 @@ if __name__ == "__main__":
             elif opt == '--with-email':
                 USE_HOTMAIL = True
             else:
-                print(colored("Unrecognized command line option {}".format(sys.argv[i]), 'red'))
+                print(colored("Unrecognized command line option {}"
+                              .format(sys.argv[i]), 'red'))
                 quit(1)
             i += 1
 
@@ -209,7 +210,8 @@ if __name__ == "__main__":
             HOTMAIL = None
 
 
-        print("Server is started on {} port {}, save file is {}".format(SERVER_ADDRESS, PORT_NUMBER, save_file))
+        print("Server is started on {} port {}, save file is {}"
+              .format(SERVER_ADDRESS, PORT_NUMBER, save_file))
         server.serve_forever()
 
     except KeyboardInterrupt:

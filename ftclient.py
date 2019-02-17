@@ -126,7 +126,10 @@ def make_prompt_session():
     return prompt
 
 def get_tree():
-    request_url = 'http://{}:{}/api/tree'.format(program_options.host, program_options.port)
+    request_url = 'http://{}:{}/api/tree'.format(
+        program_options.host,
+        program_options.port
+    )
     print(request_url)
     resp = requests.get(request_url)
     return focus.TreeManager.from_dict(resp.json())
@@ -140,7 +143,7 @@ def save_org_command(filename, tree):
         'error': None,
         'term_output': 'saved file {}'.format(os.getcwd() + '/' + filename),
         'term_error':''
-        }
+    }
 
 def fs_parent_search(filename):
     directory = os.getcwd()
@@ -172,16 +175,18 @@ def get_options():
         env_var = 'FOCUS_TREE_' + key.upper()
         if key in config:
             if cl_opts.verbose:
-                print(colored('Getting {} from from config file {}'.format(key, config['config_file']), 'yellow'))
+                print(colored('Getting {} from from config file {}'
+                              .format(key, config['config_file']), 'yellow'))
             return t(config[key])
         elif env_var in os.environ:
             if cl_opts.verbose:
-                print(colored('Getting {} from from environment variable {}'.format(key, env_var), 'yellow'))
+                print(colored('Getting {} from from environment variable {}'
+                              .format(key, env_var), 'yellow'))
             return t(os.environ[env_var])
         else:
             if cl_opts.verbose:
-                print(colored('Getting {} from hardcoded value {}'.format(key, default), 'yellow'))
-
+                print(colored('Getting {} from hardcoded value {}'
+                              .format(key, default), 'yellow'))
             return default
 
     if not cl_opts.port:
@@ -196,7 +201,8 @@ if __name__ == "__main__":
     program_options = get_options()
 
     if program_options.verbose:
-        print("FocusTree client using http://{}:{}".format(program_options.host, program_options.port))
+        print("FocusTree client using http://{}:{}"
+              .format(program_options.host, program_options.port))
 
     print(program_options)
     if program_options.ft_command:
