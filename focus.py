@@ -146,11 +146,22 @@ class TreeManager:
     def __init__(self):
         self.root_nodes = []
         self.current_task = None
-        self.operations = {
-            "subtask": self.subtask,
-            "done": self.done,
-            "next-task": self.next_task
+        self.commands = {
+            'next-task': {'handler': self.next_task},
+            'new-task': {'handler': self.new_task},
+            'save-org': {'handler': self.save_org },
+            'subtask': {'handler': self.subtask},
+            'done': {'handler': self.done },
+            'reset': {'handler': lambda args : self.reset()},
+            'switch-task': {'handler': self.switch_task},
+            'tree' : { 'handler': lambda args: None },
+            'subtask-by-id': {'handler': self.subtask_by_id},
+            'reassign-ids': {'handler': lambda args: self.reassign_ids()},
         }
+
+    @staticmethod
+    def command_list():
+        return list(TreeManager().commands.keys())
 
     def to_dict(self):
         return {
@@ -194,38 +205,15 @@ class TreeManager:
         words = command.split();
         if not words:
             raise FocusTreeException("Missing Command: Must supply a command")
+
         operation = words[0].lower()
         args = ' '.join(words[1:])
         print("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
-        if operation in ["next-task", 'nt']:
-            if not args:
-                raise FocusTreeException("Missing Command : This command must have an argument")
-            self.next_task(args)
-        elif operation in ['new-task', 'net']:
-            if not args:
-                raise FocusTreeException("Missing Command : This command must have an argument")
-            self.new_task(args)
-        elif operation in ['save-org', 'so']:
-            with open(args, 'w+') as f:
-                f.write(self.to_org())
-        elif operation in [ 'st', "subtask", "call", "push"]:
-            if not args:
-                raise FocusTreeException("Missing Command : This command must have an argument")
-            self.subtask(args)
-        elif operation in ['stbi', 'subtask-by-id']:
-            self.subtask_by_id(words)
-        elif operation in ["return", "done", "pop"]:
-            self.done(args)
-        elif operation in ["reset"]:
-            self.reset()
-        elif operation in ['t', "tree", "current"]:
-            pass
-        elif operation in ["switch-task"]:
-            self.switch_task(int(args))
-        elif operation in ['reassign-ids']:
-            self.reassign_ids()
-        else:
+
+        if operation not in self.commands:
             raise FocusTreeException("UNKNOWN OPERATION " + operation)
+
+        self.commands[operation]['handler'](args)
 
         if operation in ['t', "tree", 'nt', "next-task", 'net', "new-task"] or self.current_task is None:
             term_output = self.printable_tree()
@@ -234,7 +222,8 @@ class TreeManager:
 
         return term_output
 
-    def subtask_by_id(self, words):
+    def subtask_by_id(self, args):
+        words = args.split()
         try:
             id = int(words[1])
         except ValueError:
@@ -249,7 +238,12 @@ class TreeManager:
             raise FocusTreeException("This command requires text after the id")
         task.add_child(TreeNode(text=task_text))
 
-    def switch_task(self, id):
+    def save_org(self, args):
+        with open(args, 'w+') as f:
+            f.write(self.to_org())
+
+    def switch_task(self, args):
+        id = int(args)
         self.current_task = self.find_task_by_id(id)
         print('setting current task to :{} (id={})'.format(self.current_task.text, self.current_task.id))
         return self.current_task
@@ -317,15 +311,23 @@ class TreeManager:
         return '->' + '\n->'.join(lines)
 
     def next_task(self, task):
-        if self.current_task:
-            self.current_task.parent.add_child(TreeNode(text=task))
-        else:
-            self.new_task(task)
+        if not args:
+            raise FocusTreeException("Missing Command : This command must have an argument")
+        if not self.current_task:
+            raise FocusTreeException("Next-task is only valid if there is a current task")
+        if not self.current_task.parent:
+            raise FocusTreeException("Next-task is only valid if current_task has a parent")
+
+        self.current_task.parent.add_child(TreeNode(text=task))
 
     def new_task(self, task):
+        if not task:
+            raise FocusTreeException("Missing Command : This command must have an argument")
         self.root_nodes.append(TreeNode(text=task))
 
     def subtask(self, task):
+        if not task:
+            raise FocusTreeException("Missing Command : This command must have an argument")
         new_task = TreeNode(text=task)
         if self.current_task is not None:
             self.current_task.add_child(new_task)

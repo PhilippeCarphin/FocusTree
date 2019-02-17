@@ -88,9 +88,7 @@ def REPL():
             break
 
 def make_prompt_session():
-    ft_completer = FuzzyWordCompleter([
-        'subtask', 'new-task', 'switch-task', 'next-task', 'subtask-by-id', 'tree'
-    ])
+    ft_completer = FuzzyWordCompleter(focus.TreeManager.command_list())
     prompt_style = Style.from_dict({
         'prompt': '#00aa00'
     })
