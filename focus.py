@@ -222,11 +222,10 @@ class TreeManager:
 
         self.commands[operation]['handler'](args)
 
-        if operation in ['t', "tree", 'nt', "next-task", 'net', "new-task"] or self.current_task is None:
-            term_output = self.printable_tree()
-        elif operation in ['help']:
-            # TODO Fix This!!
+        if operation in ['help']:
             term_output = json.dumps(TreeManager.meta_dict(), indent=4, sort_keys=True)
+        elif operation in ['t', "tree", 'nt', "next-task", 'net', "new-task"] or self.current_task is None:
+            term_output = self.printable_tree()
         else:
             term_output = self.current_task.printable_ancestors()
 
