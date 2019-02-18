@@ -173,7 +173,7 @@ class TreeManager:
 
     @staticmethod
     def command_list():
-        return list(TreeManager().commands.keys())
+        return TreeManager().commands
 
     @staticmethod
     def meta_dict():
