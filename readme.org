@@ -1,5 +1,73 @@
 #+TITLE: Focus Tree Project
 
+* Setup
+
+** Cloning
+
+#+BEGIN_SRC sh
+git clone https://github.com/philippecarphin/FocusTree
+#+END_SRC
+
+** Install python requirements
+
+#+BEGIN_SRC sh
+cd FocusTree
+python3 -m pip install -r requirements.txt
+#+END_SRC
+
+** Start the server
+
+#+BEGIN_SRC sh
+python3 ftserver.py [-v|--verbose] [--port PORT] [--host HOST]
+#+END_SRC
+
+** Start the command line client
+
+#+BEGIN_SRC sh
+python3 ftclient.py [-v|--verbose] [--port PORT] [--host HOST]
+#+END_SRC
+
+** Build the web app
+
+The server serves the =clients/ft-web-client/build= directory.  For the files to
+be there, run these commans
+
+#+BEGIN_SRC sh
+cd clients/ft-web-client
+npm install
+npm run build
+#+END_SRC
+
+** Launch the web app
+
+You can open up a browser and type up the address but who's got time for that.
+#+BEGIN_SRC sh
+python3 ftwebapp.py [-v|--verbose] [--port PORT] [--host HOST]
+#+END_SRC
+
+
+* Use
+
+Type =help=, that should be enough to get the idea.
+
+** =.focustree.json=
+
+If this file is present in the current directory or any of it's ancestors, this
+will be used to select the port and host.
+
+Its contents should look like this but it doesn't need to have any of the keys,
+it can just have one.
+
+#+BEGIN_SRC json
+{
+    "port": 1234,
+    "host": "0.0.0.0",
+}
+#+END_SRC
+
+This is overriden by the command line options and it overrides the environment
+variables =FOCUS_TREE_PORT= and =FOCUS_TREE_HOST=.
+
 * Abstract
 
 This program is for micromanaging focus during complex tasks.
