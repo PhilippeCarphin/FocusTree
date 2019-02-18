@@ -152,33 +152,50 @@ class TreeNode:
 def get_command():
     return input("enter command")
 
+commands = {}
+
+def register_command(func):
+    command = func.__name__.replace('_','-')
+    commands[command] = {'help': func.__doc__, 'handler': func}
+    return func
+
+
 class TreeManager:
     def __init__(self):
         self.root_nodes = []
         self.current_task = None
-        self.commands = {
-            'next-task': {'handler': self.next_task, 'help': 'Create a new sibling of current_task'},
-            'new-task': {'handler': self.new_task, 'help': 'Create new root task'},
-            'save-org': {'handler': self.save_org , 'help': 'Save as org mode file'},
-            'subtask': {'handler': self.subtask, 'help': 'Create and enter new subtask of current task'},
-            'done': {'handler': self.done , 'help': 'Mark current task as done and move to the next task in DFS order'},
-            'reset': {'handler': lambda args : self.reset(), 'help': 'Clear the tree completely'},
-            'switch-task': {'handler': self.switch_task, 'help': 'switch to the task (by id)'},
-            'tree' : { 'handler': lambda args: None , 'help': 'Show the entire tree'},
-            'subtask-by-id': {'handler': self.subtask_by_id, 'help': 'create subtask of task with id (subtask-by-id <an id> the text of the task)'},
-            'reassign-ids': {'handler': lambda args: self.reassign_ids(), 'help': 'Reassing all ids in case something weird happened'},
-            'current' : {'handler' : lambda args : None, 'help': 'Show the current context'},
-            'help': {'handler': lambda args: None, 'help': 'Show this thing'},
-        }
 
-    @staticmethod
-    def command_list():
-        return TreeManager().commands
+    def update(self):
+        def find_not_done_dfs(n):
+            if n is None:
+                return None
 
-    @staticmethod
-    def meta_dict():
-        commands = TreeManager().commands
-        return {key: commands[key]["help"] for key in commands} 
+            for c in n.children:
+                res = find_not_done_dfs(c)
+                if res:
+                    return res
+            else:
+                if not n.done:
+                    return n
+                else:
+                    return None
+
+        cursor = self.current_task
+        result = find_not_done_dfs(cursor)
+
+        while not result and cursor and cursor.parent:
+            cursor = cursor.parent
+            result = find_not_done_dfs(cursor)
+            if result:
+                break
+        else:
+            for r in self.root_nodes:
+                result = find_not_done_dfs(r)
+                if result:
+                    break
+
+        self.current_task = result
+
 
     def to_dict(self):
         return {
@@ -219,30 +236,45 @@ class TreeManager:
         tm.current_task = tm.find_task_by_id(d["current_task_id"])
         return tm
 
+    def printable_tree(self):
+        lines = []
+        for n in self.root_nodes:
+            lines.append(n.printable_tree())
+        return '->' + '\n->'.join(lines)
+
     def execute_command(self, command):
-        words = command.split();
-        if not words:
+        if not command:
             raise FocusTreeException("Missing Command: Must supply a command")
 
+        words = command.split();
         operation = words[0].lower()
         args = ' '.join(words[1:])
-        print("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
 
-        if operation not in self.commands:
+        if operation not in commands:
             raise FocusTreeException("UNKNOWN OPERATION " + operation)
 
-        self.commands[operation]['handler'](args)
+        print("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
+        return commands[operation]['handler'](self, args)
 
-        if operation in ['help']:
-            term_output = json.dumps(TreeManager.meta_dict(), indent=4, sort_keys=True)
-        elif operation in ["tree", "next-task", "new-task"] or self.current_task is None:
-            term_output = self.printable_tree()
-        else:
-            term_output = self.current_task.printable_ancestors()
 
-        return term_output
+    @register_command
+    def tree(self, args):
+        """Get a printable tree"""
+        return self.printable_tree()
 
+    @register_command
+    def current(self, args):
+        """Get a printable list of ancestors"""
+        return self.current_task.printable_ancestors()
+
+    @register_command
+    def help(self, args):
+        """Show the list of commands and their descriptions"""
+        return json.dumps({c: str(commands[c]['help']) for c in commands}, indent=4, sort_keys=True)
+
+    @register_command
     def subtask_by_id(self, args):
+        """Change to the subtask with the specified id"""
         words = args.split()
         try:
             id = int(words[1])
@@ -257,57 +289,36 @@ class TreeManager:
         if not task_text:
             raise FocusTreeException("This command requires text after the id")
         task.add_child(TreeNode(text=task_text))
+        return self.printable_tree()
 
+    @register_command
     def save_org(self, args):
+        """ Save an org-mode file locally"""
         with open(args, 'w+') as f:
             f.write(self.to_org())
 
+        return 'Saved file {}'.format(args)
+
+    @register_command
     def switch_task(self, args):
+        """Switch to the task with the specified id"""
         id = int(args)
         self.current_task = self.find_task_by_id(id)
         print('setting current task to :{} (id={})'
               .format(self.current_task.text, self.current_task.id))
-        return self.current_task
+        return self.current_task.printable_ancestors()
 
-    def reset(self):
+    @register_command
+    def reset(self, args):
+        """Clear the whole tree"""
         self.save_to_file('backup.json')
         self.root_nodes = []
         self.current_task = None
+        return 'Cleared tree'
 
-    def update(self):
-        def find_not_done_dfs(n):
-            if n is None:
-                return None
-
-            for c in n.children:
-                res = find_not_done_dfs(c)
-                if res:
-                    return res
-            else:
-                if not n.done:
-                    return n
-                else:
-                    return None
-
-        cursor = self.current_task
-        result = find_not_done_dfs(cursor)
-
-        while not result and cursor and cursor.parent:
-            cursor = cursor.parent
-            result = find_not_done_dfs(cursor)
-            if result:
-                break
-        else:
-            for r in self.root_nodes:
-                result = find_not_done_dfs(r)
-                if result:
-                    break
-
-        self.current_task = result
-
-
-
-    def reassign_ids(self):
+    @register_command
+    def reassign_ids(self, args):
+        """Reassign all the ids in the case that they got messed up."""
         current_id = 0
 
         def visit(n, func):
@@ -325,14 +336,13 @@ class TreeManager:
 
         TreeNode.TreeNode_Counter = current_id + 1
 
-    def printable_tree(self):
-        lines = []
-        for n in self.root_nodes:
-            lines.append(n.printable_tree())
-        return '->' + '\n->'.join(lines)
+        return 'Reassigned ids'
 
+
+    @register_command
     def next_task(self, task):
-        if not args:
+        """Add a new sibling to the current task"""
+        if not task:
             raise FocusTreeException("Missing Command : This command must have an argument")
         if not self.current_task:
             raise FocusTreeException("Next-task is only valid if there is a current task")
@@ -341,12 +351,20 @@ class TreeManager:
 
         self.current_task.parent.add_child(TreeNode(text=task))
 
+        return self.printable_tree()
+
+    @register_command
     def new_task(self, task):
+        """Create a new root task"""
         if not task:
             raise FocusTreeException("Missing Command : This command must have an argument")
         self.root_nodes.append(TreeNode(text=task))
 
+        return self.printable_tree()
+
+    @register_command
     def subtask(self, task):
+        """Create and enter a new subtask of the current task"""
         if not task:
             raise FocusTreeException("Missing Command : This command must have an argument")
         new_task = TreeNode(text=task)
@@ -356,7 +374,11 @@ class TreeManager:
             self.root_nodes.append(new_task)
         self.current_task = new_task
 
+        return self.current_task.printable_ancestors()
+
+    @register_command
     def done(self, args):
+        """Mark the current task as done (with optional closing notes)"""
         if self.current_task is None:
             raise FocusTreeException("No current task")
         self.current_task.done = True
@@ -367,6 +389,8 @@ class TreeManager:
             self.current_task.closing_notes = args
             self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
             self.update()
+
+        return self.current_task.printable_ancestors()
 
 def make_test_tree():
     root = TreeNode(text="This is the root node of the tree")
