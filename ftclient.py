@@ -12,6 +12,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter, FuzzyWordCompleter
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import style_from_pygments_cls, Style
+from prompt_toolkit.history import FileHistory
 
 class REPLDoneError(Exception):
     pass
@@ -114,6 +115,7 @@ def make_prompt_session():
         current_buffer.insert_text(compl + ' ')
 
     prompt_sesh = PromptSession(
+        history=FileHistory(os.path.expanduser('~/.focus_tree_history')),
         completer=ft_completer,
         reserve_space_for_menu=8,
         lexer=PygmentsLexer(BashLexer),
