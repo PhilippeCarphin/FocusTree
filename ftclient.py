@@ -9,7 +9,7 @@ import argparse
 from pygments.lexers.shell import BashSessionLexer, BashLexer
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import Completion, Completer, FuzzyCompleter
+from prompt_toolkit.completion import Completion, Completer, FuzzyCompleter, FuzzyWordCompleter, WordCompleter
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import style_from_pygments_cls, Style
 from prompt_toolkit.history import FileHistory
@@ -106,6 +106,11 @@ def make_prompt_session():
     ft_completer = FuzzyCompleter(CustomComplete())
     # This if I want the help to be displayed
     ft_completer = CustomComplete()
+    ####################################################################################
+    commands = focus.commands
+    meta_dict = {c : commands[c]['help'] for c in commands}
+    #print(meta_dict)
+    ft_completer = WordCompleter(focus.commands, meta_dict=meta_dict)
     prompt_style = Style.from_dict({
         'prompt': '#00aa00'
     })
@@ -138,7 +143,7 @@ def make_prompt_session():
         lexer=PygmentsLexer(BashLexer),
         key_bindings=bindings,
         style=prompt_style,
-        complete_style=CompleteStyle.COLUMN
+        complete_style=CompleteStyle.MULTI_COLUMN
     )
     def prompt():
         return prompt_sesh.prompt([('class:username', 'FocusTree> ')])
