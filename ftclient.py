@@ -64,11 +64,14 @@ def print_output(resp):
     print(resp['term_output'])
 
 def loop(prompt_sesh):
-    command_line = read_command(prompt_sesh)
-    if command_line == '': return
-    resp = eval_command(command_line)
-    if resp:
-        print_output(resp)
+    try:
+        command_line = read_command(prompt_sesh)
+        if command_line == '': return
+        resp = eval_command(command_line)
+        if resp:
+            print_output(resp)
+    except KeyboardInterrupt:
+        return
 
 def read_config_file():
     file = fs_parent_search('.focustree.json')
@@ -86,8 +89,6 @@ def REPL():
         try:
             loop(prompt)
         except REPLDoneError:
-            break
-        except KeyboardInterrupt:
             break
 
 def make_prompt_session():
