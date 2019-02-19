@@ -14,6 +14,7 @@ from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import style_from_pygments_cls, Style
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+from prompt_toolkit.shortcuts import CompleteStyle
 
 class REPLDoneError(Exception):
     pass
@@ -122,7 +123,8 @@ def make_prompt_session():
         reserve_space_for_menu=8,
         lexer=PygmentsLexer(BashLexer),
         key_bindings=bindings,
-        style=prompt_style
+        style=prompt_style,
+        complete_style=CompleteStyle.COLUMN
     )
     def prompt():
         return prompt_sesh.prompt([('class:username', 'FocusTree> ')])
