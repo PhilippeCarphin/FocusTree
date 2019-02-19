@@ -13,6 +13,7 @@ from prompt_toolkit.completion import WordCompleter, FuzzyWordCompleter
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import style_from_pygments_cls, Style
 from prompt_toolkit.history import FileHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
 class REPLDoneError(Exception):
     pass
@@ -103,19 +104,20 @@ def make_prompt_session():
     @bindings.add('c-k')
     def _(event):
         event.current_buffer.complete_previous()
-    @bindings.add('tab')
-    def _(event):
-        # THIS IS THE GETTO-EST THING EVER, DON'T JUDGE ME!
-        # I just want it to select the currently highlighted
-        # completion.  It could continue completing after.
-        current_buffer = event.app.current_buffer
-        compl = current_buffer.text
-        current_buffer.cancel_completion()
-        current_buffer.text = ''
-        current_buffer.insert_text(compl + ' ')
+    # @bindings.add('tab')
+    # def _(event):
+    #     # THIS IS THE GETTO-EST THING EVER, DON'T JUDGE ME!
+    #     # I just want it to select the currently highlighted
+    #     # completion.  It could continue completing after.
+    #     current_buffer = event.app.current_buffer
+    #     compl = current_buffer.text
+    #     current_buffer.cancel_completion()
+    #     current_buffer.text = ''
+    #     current_buffer.insert_text(compl + ' ')
 
     prompt_sesh = PromptSession(
         history=FileHistory(os.path.expanduser('~/.focus_tree_history')),
+        auto_suggest=AutoSuggestFromHistory(),
         completer=ft_completer,
         reserve_space_for_menu=8,
         lexer=PygmentsLexer(BashLexer),
