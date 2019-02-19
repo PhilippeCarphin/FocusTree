@@ -107,10 +107,10 @@ def make_prompt_session():
     # This if I want the help to be displayed
     ft_completer = CustomComplete()
     ####################################################################################
-    commands = focus.commands
-    meta_dict = {c : commands[c]['help'] for c in commands}
-    #print(meta_dict)
-    ft_completer = WordCompleter(focus.commands, meta_dict=meta_dict)
+    # commands = focus.commands
+    # meta_dict = {c : commands[c]['help'] for c in commands}
+    # #print(meta_dict)
+    # ft_completer = WordCompleter(focus.commands, meta_dict=meta_dict)
     prompt_style = Style.from_dict({
         'prompt': '#00aa00'
     })
@@ -143,7 +143,7 @@ def make_prompt_session():
         lexer=PygmentsLexer(BashLexer),
         key_bindings=bindings,
         style=prompt_style,
-        complete_style=CompleteStyle.MULTI_COLUMN
+        complete_style=CompleteStyle.COLUMN
     )
     def prompt():
         return prompt_sesh.prompt([('class:username', 'FocusTree> ')])
