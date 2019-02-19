@@ -9,7 +9,7 @@ import argparse
 from pygments.lexers.shell import BashSessionLexer, BashLexer
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import WordCompleter, FuzzyWordCompleter
+from prompt_toolkit.completion import Completion, Completer, FuzzyCompleter
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import style_from_pygments_cls, Style
 from prompt_toolkit.history import FileHistory
@@ -92,7 +92,20 @@ def REPL():
             break
 
 def make_prompt_session():
-    ft_completer = FuzzyWordCompleter(focus.commands)
+    commands = focus.commands
+    class CustomComplete(Completer):
+        def get_completions(self, document, complete_event):
+            word = document.get_word_before_cursor()
+            for command in list(commands):
+                if command.startswith(word):
+                    yield Completion(
+                        command,
+                        display=command + ' : ' + commands[command]['help'],
+                        start_position=-len(word))
+
+    ft_completer = FuzzyCompleter(CustomComplete())
+    # This if I want the help to be displayed
+    ft_completer = CustomComplete()
     prompt_style = Style.from_dict({
         'prompt': '#00aa00'
     })
