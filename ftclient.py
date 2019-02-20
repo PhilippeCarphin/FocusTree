@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import subprocess
 import requests
 import focus
 import json
@@ -230,6 +231,10 @@ if __name__ == "__main__":
               .format(program_options.host, program_options.port))
 
     print(program_options)
+    try:
+        get_tree()
+    except:
+        process = subprocess.Popen(['ftserver', '--port', str(program_options.port), '--host', program_options.host], stdout=os.devnull)
     if program_options.ft_command:
         resp = eval_command(' '.join(program_options.ft_command))
         print_output(resp)
