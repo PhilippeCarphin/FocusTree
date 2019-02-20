@@ -1,10 +1,30 @@
 #!/usr/bin/env python3
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from ftclient import get_options
+import socket
 import json
 import os.path
 import focus
 import mailtool
+
+def port_is_available(p):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        return sock.connect_ex(('localhost', p)) != 0
+
+def find_available_ports(start, end):
+    for p in range(start, end):
+        if port_is_available(p):
+            yield p
+
+def get_first_open_port(start, end):
+    return find_available_ports(start, end).send(None)
+
+def test_find_available_ports():
+    r = find_available_ports(5050,5055)
+
+    print(r.send(None))
+    print(get_first_open_port(5051, 5055))
 
 
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
@@ -166,36 +186,16 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(bytes(message, 'utf-8'))
 
 if __name__ == "__main__":
+
+    # test_find_available_ports()
+    # quit()
+
     try:
 
-        SERVER_ADDRESS = '0.0.0.0'
-        PORT_NUMBER = 5051
-        USE_HOTMAIL = False
 
-        import sys
-        i = 1
-        while i < len(sys.argv):
-            opt = sys.argv[i]
-            if opt == '--port':
-                i+=1
-                PORT_NUMBER = int(sys.argv[i])
-            elif opt == '--host':
-                i+=1
-                SERVER_ADDRESS = sys.argv[i]
-            elif opt == '--with-email':
-                USE_HOTMAIL = True
-            else:
-                print(colored("Unrecognized command line option {}"
-                              .format(sys.argv[i]), 'red'))
-                quit(1)
-            i += 1
+        program_options = get_options()
 
-        import sys
-        if len(sys.argv) >= 3:
-            if sys.argv[1] == '--port':
-                PORT_NUMBER = int(sys.argv[2])
-
-        save_file = os.path.expanduser('~/.focus-tree_{}.json'.format(PORT_NUMBER))
+        save_file = os.path.expanduser('~/.focus-tree_{}.json'.format(program_options.port))
         THE_TREE = focus.TreeManager()
         try:
             THE_TREE = focus.TreeManager.load_from_file(save_file)
@@ -203,17 +203,12 @@ if __name__ == "__main__":
             THE_TREE = focus.TreeManager()
 
         server = HTTPServer(
-            (SERVER_ADDRESS, PORT_NUMBER),
+            (program_options.host, program_options.port),
             FocusTreeRequestHandler
         )
-        if USE_HOTMAIL:
-            HOTMAIL = mailtool.make_hotmail_connection()
-        else:
-            HOTMAIL = None
-
 
         print("Server is started on {} port {}, save file is {}"
-              .format(SERVER_ADDRESS, PORT_NUMBER, save_file))
+              .format(program_options.host, program_options.port, save_file))
         server.serve_forever()
 
     except KeyboardInterrupt:
