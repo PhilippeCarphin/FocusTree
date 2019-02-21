@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import time
 import subprocess
 import requests
 import focus
@@ -86,6 +87,8 @@ def read_config_file():
 
 def REPL():
     prompt = make_prompt_session()
+    r = eval_command('current')
+    print(r['term_output'])
     while True:
         try:
             loop(prompt)
@@ -234,7 +237,11 @@ if __name__ == "__main__":
     try:
         get_tree()
     except:
-        process = subprocess.Popen(['ftserver', '--port', str(program_options.port), '--host', program_options.host], stdout=os.devnull)
+        # NOTE Maybe this should only be done if we are getting our port and host from a file
+        print("Starting server")
+        with open(os.devnull, 'w') as devnull:
+            process = subprocess.Popen(['ftserver', '--port', str(program_options.port), '--host', program_options.host], stdout=devnull, stderr=devnull)
+        time.sleep(1)
     if program_options.ft_command:
         resp = eval_command(' '.join(program_options.ft_command))
         print_output(resp)
