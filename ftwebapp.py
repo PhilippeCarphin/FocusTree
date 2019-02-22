@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ftclient import get_options
+from options import get_options
 import sys
 import subprocess
 
@@ -11,6 +11,6 @@ url = 'http://{}:{}/index.html'.format(opts.host, opts.port)
 if sys.platform == 'darwin':
     command = 'open'
 else:
-    command = 'xdg-open'
+    command = 'firefox'
 
-subprocess.run([command, url])
+subprocess.Popen([command, url])
