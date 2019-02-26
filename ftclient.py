@@ -16,7 +16,8 @@ from prompt_toolkit.styles import style_from_pygments_cls, Style
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.shortcuts import CompleteStyle
-from .options import get_options
+
+from program_options import get_options
 
 class REPLDoneError(Exception):
     pass

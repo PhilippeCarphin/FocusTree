@@ -1,3 +1,4 @@
 $HOME/.local/bin/ftclient             ftclient.py
 $HOME/.local/bin/ftserver             ftserver.py
 $HOME/.local/bin/ftwebapp             ftwebapp.py
+$HOME/.local/bin/ftinit               ftinit.py
