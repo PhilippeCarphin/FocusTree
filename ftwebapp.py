@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from options import get_options
+from program_options import get_options
 import sys
 import subprocess
 
