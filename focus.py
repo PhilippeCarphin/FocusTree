@@ -1,5 +1,6 @@
 import datetime
 import json
+from termcolor import colored
 
 class FocusTreeException(Exception):
     pass
@@ -308,7 +309,10 @@ class TreeManager:
     @register_command
     def current(self, args):
         """Get a printable list of ancestors"""
-        return self.current_task.printable_ancestors()
+        if self.current_task:
+            return self.current_task.printable_ancestors()
+        else:
+            return colored("No current task\n", 'red') + self.printable_tree()
 
     @register_command
     def help(self, args):
@@ -433,7 +437,7 @@ class TreeManager:
             self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
             self.update()
 
-        return self.current_task.printable_ancestors()
+        return self.current(None)
 
 def make_test_tree():
     root = TreeNode(text="This is the root node of the tree")

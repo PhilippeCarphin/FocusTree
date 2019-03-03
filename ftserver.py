@@ -181,10 +181,13 @@ if __name__ == "__main__":
 
     try:
 
-
         program_options = get_options()
 
-        save_file = os.path.expanduser('~/.focus-tree_{}.json'.format(program_options.port))
+        if program_options.config_file:
+            save_file = os.path.dirname(program_options.config_file) + '/.focustree.save.{}.json'.format(program_options.port)
+        else:
+            save_file = os.path.expanduser('~/.focus-tree_{}.json'.format(program_options.port))
+
         THE_TREE = focus.TreeManager()
         try:
             THE_TREE = focus.TreeManager.load_from_file(save_file)

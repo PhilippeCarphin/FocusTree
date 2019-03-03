@@ -30,3 +30,9 @@ class TestProgramOptions(unittest.TestCase):
         opts = program_options.get_options()
 
         self.assertEqual(opts.port, port)
+
+    def test_nones(self):
+
+        opts = program_options.get_options(look_for_config_file=False)
+
+        self.assertIsNone(opts.config_file)
