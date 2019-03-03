@@ -13,7 +13,7 @@ def read_config_file():
             config['config_file'] = file
             return config
     else:
-        return {}
+        return None
 def fs_parent_search(filename):
     directory = os.getcwd()
     while True:
@@ -30,6 +30,7 @@ def command_line_parser():
     p = argparse.ArgumentParser()
     p.add_argument("-p", "--port", type=int, help="Port of the server")
     p.add_argument("--host", help="Address of the server")
+    p.add_argument("--save-file", type=os.fspath, help="Address of the server")
     p.add_argument("-v", "--verbose", action="store_true", help="Address of the server")
     p.add_argument("ft_command", nargs='*', help="(optional) The command to send to focus tree, no command will launch an interactive client")
     return p.parse_args()
