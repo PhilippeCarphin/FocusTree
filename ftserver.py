@@ -50,18 +50,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                     term_output = THE_TREE.execute_command(command_line)
                     THE_TREE.save_to_file(save_file)
                 else:
-                    if operation in ['so', 'send-org']:
-                        with open('focus-tree.org', 'w+') as f:
-                            f.write(THE_TREE.to_org())
-                        mailtool.send_mail_connected(
-                            'phil103@hotmail.com',
-                            args,
-                            'FocusTree: Your tree',
-                            'Current contents of your tree',
-                            HOTMAIL,
-                            'focus-tree.org',
-                        )
-                    elif operation in ['save-file']:
+                    if operation in ['save-file']:
                         THE_TREE.save_to_file(args)
                     elif operation in ['load-file']:
                         THE_TREE = focus.TreeManager.load_from_file(args)
