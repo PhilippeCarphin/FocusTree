@@ -196,7 +196,15 @@ class TreeManager:
     """Class defining a command based user interface"""
     def __init__(self):
         self.root_nodes = []
-        self.current_task = None
+        self._current_task = None
+
+    @property
+    def current_task(self):
+        return self._current_task
+
+    @current_task.setter
+    def current_task(self, task_node):
+        self.current_task = task_node
 
     def execute_command(self, command):
         if not command:
