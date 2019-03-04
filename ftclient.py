@@ -5,7 +5,7 @@ import time
 import subprocess
 import requests
 import focus
-import json
+# import json
 from termcolor import colored
 from pygments.lexers.shell import BashSessionLexer, BashLexer
 from prompt_toolkit.key_binding import KeyBindings
@@ -142,7 +142,9 @@ def make_prompt_session():
         complete_style=CompleteStyle.COLUMN
     )
     def prompt():
-        return prompt_sesh.prompt([('class:username', 'FocusTree> ')])
+        return prompt_sesh.prompt([
+            ('class:username', 'FocusTree> ')
+        ])
 
     return prompt
 
