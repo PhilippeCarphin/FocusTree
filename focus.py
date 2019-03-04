@@ -196,7 +196,18 @@ class TreeManager:
     """Class defining a command based user interface"""
     def __init__(self):
         self.root_nodes = []
+        self.interrupt_tasks = []
+        self.jumps = []  # I'm thinking tuples of the form (from, to)
         self._current_task = None
+
+    def call(self, task_node):
+        jump = (self.current_task, task_node)
+        self.jumps.append(jump)
+        self.current_task = task_node
+
+    def ret(self):
+        jump = self.jumps.pop()
+        self.current_task = jump[0]
 
     @property
     def current_task(self):
