@@ -2,6 +2,17 @@
 
 * Setup
 
+** Quick setup
+
+Clone it, install the requirements with pip and the =requirements.txt= file, and run =python3 ftclient.py=:
+
+#+BEGIN_SRC sh
+git clone https://github.com/philippecarphin/FocusTree
+python3 -m pip install --user FocusTree/requirements.txt
+python3 FocusTree/ftclient.py
+# Auto complete is the documentation
+#+END_SRC
+
 ** Cloning
 
 #+BEGIN_SRC sh
