@@ -32,15 +32,14 @@ class DemoComponent extends React.Component<IProps, IState> {
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
     }
 
-    private sendCommand(command: string){
-        return fetch(url_prefix + '/api/send-command', {
+    private async sendCommand(command: string) {
+        const resp = await fetch(url_prefix + '/api/send-command', {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain'},
+            headers: {'Content-Type': 'text/plain'},
             body: command
-        }).then((resp)=>{
-            // console.log(resp.json());
-            return resp.json();
-        })
+        });
+        // console.log(resp.json());
+        return resp.json();
     }
 
     private fetchTree(){

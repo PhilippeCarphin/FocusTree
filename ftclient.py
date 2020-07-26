@@ -176,14 +176,22 @@ if __name__ == "__main__":
               .format(program_options.host, program_options.port))
 
     print(program_options)
-    server_process
+
+    server_process = None
+
     try:
         get_tree()
-    except:
+    except requests.exceptions.ConnectionError as e:
         # NOTE Maybe this should only be done if we are getting our port and host from a file
+        print(f'Could not connect to server on host {program_options.port}, port {program_options.host}')
         print("Starting server")
         server_process = subprocess.Popen(['ftserver', '--port', str(program_options.port), '--host', program_options.host])
         time.sleep(1)
+        try:
+            get_tree()
+        except requests.exceptions.ConnectionError as e:
+            print('Could not start server')
+            quit()
 
     if program_options.ft_command:
         resp = eval_command(' '.join(program_options.ft_command))
@@ -193,3 +201,4 @@ if __name__ == "__main__":
 
     if server_process:
         server_process.kill()
+

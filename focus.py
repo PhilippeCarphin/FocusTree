@@ -1,5 +1,6 @@
 import datetime
 import json
+from termcolor import colored
 
 class FocusTreeException(Exception):
     pass
@@ -195,7 +196,26 @@ class TreeManager:
     """Class defining a command based user interface"""
     def __init__(self):
         self.root_nodes = []
-        self.current_task = None
+        self.interrupt_tasks = []
+        self.jumps = []  # I'm thinking tuples of the form (from, to)
+        self._current_task = None
+
+    def call(self, task_node):
+        jump = (self.current_task, task_node)
+        self.jumps.append(jump)
+        self.current_task = task_node
+
+    def ret(self):
+        jump = self.jumps.pop()
+        self.current_task = jump[0]
+
+    @property
+    def current_task(self):
+        return self._current_task
+
+    @current_task.setter
+    def current_task(self, task_node):
+        self._current_task = task_node
 
     def execute_command(self, command):
         if not command:
@@ -309,9 +329,9 @@ class TreeManager:
     def current(self, args):
         """Get a printable list of ancestors"""
         if self.current_task:
-        	return self.current_task.printable_ancestors()
+            return self.current_task.printable_ancestors()
         else:
-        	return "No current task"
+            return colored("No current task\n", 'red') + self.printable_tree()
 
     @register_command
     def help(self, args):
@@ -436,7 +456,7 @@ class TreeManager:
             self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
             self.update()
 
-        return self.current_task.printable_ancestors()
+        return self.current(None)
 
 def make_test_tree():
     root = TreeNode(text="This is the root node of the tree")
