@@ -308,7 +308,10 @@ class TreeManager:
     @register_command
     def current(self, args):
         """Get a printable list of ancestors"""
-        return self.current_task.printable_ancestors()
+        if self.current_task:
+        	return self.current_task.printable_ancestors()
+        else:
+        	return "No current task"
 
     @register_command
     def help(self, args):
