@@ -28,9 +28,40 @@ def test_find_available_ports():
 
 
 class FocusTreeRequestHandler(BaseHTTPRequestHandler):
+    def handle_command(self, command_line):
+        words = command_line.split();
+        operation = words[0].lower()
+        args = ' '.join(words[1:])
+        server_commands = ['send-org', 'so', 'save-file']
+        if operation not in server_commands:
+            return self.handle_normal_command(command_line)
+        else:
+            return self.handle_server_command(operation, args)
+
+    def handle_normal_command(self, command_line):
+            term_output = THE_TREE.execute_command(command_line)
+            THE_TREE.save_to_file(save_file)
+            return term_output
+
+    def handle_server_command(self, operation, args):
+        global THE_TREE
+        if operation in ['so', 'send-org']:
+                with open('focus-tree.org', 'w+') as f:
+                    f.write(THE_TREE.to_org())
+                mailtool.send_mail_connected(
+                    'phil103@hotmail.com',
+                    args,
+                    'FocusTree: Your tree',
+                    'Current contents of your tree',
+                    HOTMAIL,
+                    'focus-tree.org',
+                )
+        elif operation in ['save-file']:
+            THE_TREE.save_to_file(args)
+        elif operation in ['load-file']:
+            THE_TREE = focus.TreeManager.load_from_file(args)
 
     def do_POST(self):
-        global THE_TREE
         status = 'OK'
         errors = None
         term_output = None
@@ -43,29 +74,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
 
             server_commands = ['send-org', 'so', 'save-file']
             try:
-                words = command_line.split();
-                operation = words[0].lower()
-                args = ' '.join(words[1:])
-                if operation not in server_commands:
-                    term_output = THE_TREE.execute_command(command_line)
-                    THE_TREE.save_to_file(save_file)
-                else:
-                    if operation in ['so', 'send-org']:
-                        with open('focus-tree.org', 'w+') as f:
-                            f.write(THE_TREE.to_org())
-                        mailtool.send_mail_connected(
-                            'phil103@hotmail.com',
-                            args,
-                            'FocusTree: Your tree',
-                            'Current contents of your tree',
-                            HOTMAIL,
-                            'focus-tree.org',
-                        )
-                    elif operation in ['save-file']:
-                        THE_TREE.save_to_file(args)
-                    elif operation in ['load-file']:
-                        THE_TREE = focus.TreeManager.load_from_file(args)
-
+                term_output = self.handle_command(command_line)
             except focus.FocusTreeException as e:
                 status = 'error'
                 errors = str(e)
