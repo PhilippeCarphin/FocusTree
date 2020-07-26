@@ -323,7 +323,7 @@ class TreeManager:
         """Change to the subtask with the specified id"""
         words = args.split()
         try:
-            id = int(words[1])
+            id = int(words[0])
         except ValueError:
             raise FocusTreeException("Second argument must be an id")
         except IndexError:
