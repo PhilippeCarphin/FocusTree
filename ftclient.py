@@ -176,16 +176,20 @@ if __name__ == "__main__":
               .format(program_options.host, program_options.port))
 
     print(program_options)
+    server_process
     try:
         get_tree()
     except:
         # NOTE Maybe this should only be done if we are getting our port and host from a file
         print("Starting server")
-        with open(os.devnull, 'w') as devnull:
-            process = subprocess.Popen(['ftserver', '--port', str(program_options.port), '--host', program_options.host], stdout=devnull, stderr=devnull)
+        server_process = subprocess.Popen(['ftserver', '--port', str(program_options.port), '--host', program_options.host])
         time.sleep(1)
+
     if program_options.ft_command:
         resp = eval_command(' '.join(program_options.ft_command))
         print_output(resp)
     else:
         REPL()
+
+    if server_process:
+        server_process.kill()
