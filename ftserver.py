@@ -214,6 +214,8 @@ if __name__ == "__main__":
         except:
             THE_TREE = focus.TreeManager()
 
+        print(f'Starting server on host {program_options.host}, port {program_options.port}')
+
         server = HTTPServer(
             (program_options.host, program_options.port),
             FocusTreeRequestHandler
