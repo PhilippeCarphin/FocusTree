@@ -130,7 +130,9 @@ class TreeNode:
         single line with some key info for the printable_tree and printable_ancestors
         methods."""
         first_part = self.text + " (id={},{})[created: {}".format(
-            self.id, self.done, self.created_on
+            self.id,
+            "DONE" if self.done else "ongoing",
+            self.created_on
         )
         if self.done:
             finished = " finished: {}".format(self.finished_on)
