@@ -14,7 +14,12 @@ def read_config_file():
             return config
     else:
         return None
+
+
 def fs_parent_search(filename):
+    """ Search up the directory tree until a file named 'filename' is found.
+    This is like what git does to find the '.git' directory from anywhere in the
+    repo regardless of what directory we are in """
     directory = os.getcwd()
     while True:
         file = os.path.join(directory, filename)
