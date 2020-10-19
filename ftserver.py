@@ -151,8 +151,8 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
     def serve_static_react(self):
         # SERVE FILES FOR REACT WEB CLIENT
         file_dir = os.path.dirname(os.path.realpath(__file__))
-        client_dir =  os.path.join(file_dir, '/clients/ft-web-client/build/')
-        react_file = os.path.normpath(client_dir + self.path)
+        client_dir =  os.path.join(file_dir, 'clients/ft-web-client/build/')
+        react_file = os.path.join(client_dir, self.path)
         if   react_file.endswith('css'):
             self.send_response(200)
             self.send_header('Content-Type', 'text/css')
