@@ -35,7 +35,6 @@ def eval_command(command_line):
     words = command_line.split()
     operation = words[0]
     client_commands = ['save-org', 'clear', 'save-file', 'send-file']
-    print("operation = {}".format(operation))
     if operation in client_commands:
         if operation == 'save-org':
             the_tree = get_tree()
@@ -170,7 +169,6 @@ def get_tree():
         program_options.host,
         program_options.port
     )
-    print(request_url)
     resp = requests.get(request_url)
     return focus.TreeManager.from_dict(resp.json())
 
