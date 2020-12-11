@@ -19,6 +19,8 @@ from prompt_toolkit.shortcuts import CompleteStyle
 
 from program_options import get_options
 
+the_tree = None
+
 class REPLDoneError(Exception):
     pass
 
@@ -68,6 +70,8 @@ def print_output(resp):
 
 def loop(prompt_sesh):
     try:
+        global the_tree
+        the_tree = get_tree()
         command_line = read_command(prompt_sesh)
         if command_line == '': return
         resp = eval_command(command_line)
@@ -92,12 +96,27 @@ def make_prompt_session():
     class CustomComplete(Completer):
         def get_completions(self, document, complete_event):
             word = document.get_word_before_cursor()
-            for command in list(commands):
-                if command.startswith(word):
+            words = document.text.split()
+            complete_words = (words if document.text.endswith(' ')
+                                   else words[:-1])
+            if words and words[0] in ['subtask-by-id', 'switch-task']:
+                if len(complete_words) >= 2:
+                    return
+                for task in the_tree.root_nodes_iter():
                     yield Completion(
-                        command,
-                        display=command + ' : ' + commands[command]['help'],
-                        start_position=-len(word))
+                            task.id,
+                            display=f'{task.id} : {task.text}',
+                            start_position=-len(word)
+                    )
+            else:
+                if len(complete_words) >= 1:
+                    return
+                for command in list(commands):
+                    if command.startswith(word):
+                        yield Completion(
+                            command,
+                            display=command + ' : ' + commands[command]['help'],
+                            start_position=-len(word))
 
     ft_completer = FuzzyCompleter(CustomComplete())
     # This if I want the help to be displayed

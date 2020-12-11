@@ -32,6 +32,11 @@ class TreeNode:
             kwargs["parent"].add_child(self)
         self.update_depth()
 
+    def child_iter(self):
+        for node in self.children:
+            yield from node.child_iter()
+        yield self
+
     def to_dict(self):
         """Change the node to a dictionary, this is for serializing to JSON for
         transfer over HTTP or to a file"""
@@ -206,6 +211,11 @@ class TreeManager:
         jump = (self.current_task, task_node)
         self.jumps.append(jump)
         self.current_task = task_node
+
+    def root_nodes_iter(self):
+        for node in self.root_nodes:
+            yield from node.child_iter()
+        yield node
 
     def ret(self):
         jump = self.jumps.pop()
