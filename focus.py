@@ -1,5 +1,6 @@
 import datetime
 import json
+import sys
 from termcolor import colored
 
 class FocusTreeException(Exception):
@@ -240,7 +241,7 @@ class TreeManager:
         if operation not in commands:
             raise FocusTreeException("UNKNOWN OPERATION " + operation)
 
-        print("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
+        sys.stderr.write("EXECUTE_COMMAND(): operation = {}, args = {}".format(operation,args))
         return commands[operation]['handler'](self, args)
 
     def update(self):
@@ -382,7 +383,7 @@ class TreeManager:
         """Switch to the task with the specified id"""
         id = int(args)
         self.current_task = self.find_task_by_id(id)
-        print('setting current task to :{} (id={})'
+        sys.stderr.write('setting current task to :{} (id={})'
               .format(self.current_task.text, self.current_task.id))
         return self.current_task.printable_ancestors()
 
