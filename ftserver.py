@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from ftclient import get_options
+from ftclient import get_args
 import socket
 import json
 import os.path
@@ -201,12 +201,14 @@ if __name__ == "__main__":
 
     try:
 
-        program_options = get_options()
+        args = get_args()
 
-        if program_options.config_file:
-            save_file = os.path.dirname(program_options.config_file) + '/.focustree.save.{}.json'.format(program_options.port)
+        filename = f'.focustree.save.{args.port}.json'
+        if args.config_file:
+            directory = os.path.dirname(args.config_file)
         else:
-            save_file = os.path.expanduser('~/.focus-tree_{}.json'.format(program_options.port))
+            directory = os.environ['HOME']
+        save_file = os.path.join(directory, filename)
 
         THE_TREE = focus.TreeManager()
         try:
@@ -214,15 +216,14 @@ if __name__ == "__main__":
         except:
             THE_TREE = focus.TreeManager()
 
-        print(f'Starting server on host {program_options.host}, port {program_options.port}')
+        print(f'Starting server on host {args.host}, port {args.port}')
 
         server = HTTPServer(
-            (program_options.host, program_options.port),
-            FocusTreeRequestHandler
+            (args.host, args.port),
+            FocusTreeRequestHandler,
         )
 
-        print("Server is started on {} port {}, save file is {}"
-              .format(program_options.host, program_options.port, save_file))
+        print(f"Server is started on {args.host} port {args.port}, save file is {save_file}")
         server.serve_forever()
 
     except KeyboardInterrupt:

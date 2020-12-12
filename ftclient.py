@@ -17,7 +17,7 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.shortcuts import CompleteStyle
 
-from program_options import get_options
+from program_options import get_args
 
 the_tree = None
 
@@ -47,18 +47,12 @@ def eval_command(command_line):
             the_tree.save_to_file(words[1])
             resp = {'status':'OK', 'term_output': ''}
         elif operation == 'send-file':
-            request_url = 'http://{}:{}/api/send-tree'.format(
-                program_options.host,
-                program_options.port
-                )
+            request_url = f'http://{args.host}:{args.port}/api/send-tree'
             tree = focus.TreeManager.load_from_file(words[1])
             payload = bytes(json.dumps(tree.to_dict()), 'utf-8')
             resp = requests.post(request_url, data=payload).json()
     else:
-        request_url = 'http://{}:{}/api/send-command' .format(
-            program_options.host,
-            program_options.port
-            )
+        request_url = f'http://{args.host}:{args.port}/api/send-command'
         resp = requests.post(request_url, data=bytes(payload, 'utf-8')).json()
     return resp
 
@@ -165,10 +159,7 @@ def make_prompt_session():
     return prompt
 
 def get_tree():
-    request_url = 'http://{}:{}/api/tree'.format(
-        program_options.host,
-        program_options.port
-    )
+    request_url = f'http://{args.host}:{args.port}/api/tree'
     resp = requests.get(request_url)
     return focus.TreeManager.from_dict(resp.json())
 
@@ -186,13 +177,12 @@ def save_org_command(filename, tree):
 
 if __name__ == "__main__":
 
-    program_options = get_options()
+    args = get_args()
 
-    if program_options.verbose:
-        print("FocusTree client using http://{}:{}"
-              .format(program_options.host, program_options.port))
+    if args.verbose:
+        print(f"FocusTree client using http://{args.host}:{args.port}")
 
-    print(program_options)
+    print(args)
 
     server_process = None
 
@@ -200,9 +190,9 @@ if __name__ == "__main__":
         get_tree()
     except requests.exceptions.ConnectionError as e:
         # NOTE Maybe this should only be done if we are getting our port and host from a file
-        print(f'Could not connect to server on host {program_options.port}, port {program_options.host}')
+        print(f'Could not connect to server on host {args.port}, port {args.host}')
         print("Starting server")
-        server_process = subprocess.Popen(['ftserver', '--port', str(program_options.port), '--host', program_options.host])
+        server_process = subprocess.Popen(['ftserver', '--port', str(args.port), '--host', args.host])
         time.sleep(1)
         try:
             get_tree()
@@ -210,8 +200,8 @@ if __name__ == "__main__":
             print('Could not start server')
             quit()
 
-    if program_options.ft_command:
-        resp = eval_command(' '.join(program_options.ft_command))
+    if args.ft_command:
+        resp = eval_command(' '.join(args.ft_command))
         print_output(resp)
     else:
         REPL()

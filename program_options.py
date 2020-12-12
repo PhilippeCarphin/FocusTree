@@ -41,7 +41,7 @@ def command_line_parser():
     p.add_argument("ft_command", nargs='*', help="(optional) The command to send to focus tree, no command will launch an interactive client")
     return p.parse_args()
 
-def get_options(look_for_config_file=True):
+def get_args(look_for_config_file=True):
     cl_opts = command_line_parser()
     if look_for_config_file:
         config = read_config_file()
