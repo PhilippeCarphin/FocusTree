@@ -175,37 +175,32 @@ def save_org_command(filename, tree):
     }
 
 
+def execute(args):
+    try:
+        if args.ft_command:
+            resp = eval_command(' '.join(args.ft_command))
+            print_output(resp)
+        else:
+            REPL()
+    except requests.exceptions.ConnectionError as e:
+        print(f'Could not connect to ftserver : {e}')
+
 if __name__ == "__main__":
 
     args = get_args()
 
     if args.verbose:
-        print(f"FocusTree client using http://{args.host}:{args.port}")
-
-    print(args)
-
-    server_process = None
+        print("FocusTree client using http://{}:{}"
+              .format(args.host, args.port))
 
     try:
+        # There is already a server running
         get_tree()
     except requests.exceptions.ConnectionError as e:
-        # NOTE Maybe this should only be done if we are getting our port and host from a file
-        print(f'Could not connect to server on host {args.port}, port {args.host}')
-        print("Starting server")
-        server_process = subprocess.Popen(['ftserver', '--port', str(args.port), '--host', args.host])
-        time.sleep(1)
-        try:
-            get_tree()
-        except requests.exceptions.ConnectionError as e:
-            print('Could not start server')
-            quit()
-
-    if args.ft_command:
-        resp = eval_command(' '.join(args.ft_command))
-        print_output(resp)
+        print(f'No server running on {args.host}:{args.port}, starting manually on ...')
+        with subprocess.Popen(['ftserver', '--port', str(args.port), '--host', args.host]) as server:
+            # With sleep(0.1), the server isn't ready when we try to connect to it.
+            time.sleep(1)
+            execute(args)
     else:
-        REPL()
-
-    if server_process:
-        server_process.kill()
-
+        execute(args)
