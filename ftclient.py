@@ -96,11 +96,12 @@ def make_prompt_session():
                 if len(complete_words) >= 2:
                     return
                 for task in the_tree.root_nodes_iter():
-                    yield Completion(
-                            task.id,
-                            display=f'{task.id} : {task.text}',
-                            start_position=-len(word)
-                    )
+                    if str(task.id).startswith(word):
+                        yield Completion(
+                                str(task.id),
+                                display=f'{task.id} : {task.text}',
+                                start_position=-len(word)
+                        )
             else:
                 if len(complete_words) >= 1:
                     return
