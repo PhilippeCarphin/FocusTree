@@ -9,6 +9,11 @@ import focus
 import mailtool
 
 def port_is_available(p):
+    """
+``
+This is some markdown
+``
+And this is `also` markdown I think (or rst)This is a docstring """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         return sock.connect_ex(('localhost', p)) != 0
 
