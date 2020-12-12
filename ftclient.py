@@ -185,6 +185,18 @@ def execute(args):
     except requests.exceptions.ConnectionError as e:
         print(f'Could not connect to ftserver : {e}')
 
+class ServerProcess:
+    def __init__(self, args):
+        self.args = args
+    def __enter__(self):
+        self.process = subprocess.Popen(
+            f'ftserver --port {args.port} --host {args.host}',
+            shell=True,
+            stderr=subprocess.DEVNULL,
+        )
+    def __exit__(self, type, value, traceback):
+        self.process.terminate()
+
 if __name__ == "__main__":
 
     args = get_args()
@@ -198,7 +210,7 @@ if __name__ == "__main__":
         get_tree()
     except requests.exceptions.ConnectionError as e:
         print(f'No server running on {args.host}:{args.port}, starting manually on ...')
-        with subprocess.Popen(['ftserver', '--port', str(args.port), '--host', args.host]) as server:
+        with ServerProcess(args):
             # With sleep(0.1), the server isn't ready when we try to connect to it.
             time.sleep(1)
             execute(args)
