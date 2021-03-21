@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from program_options import get_options, write_config
+from program_options import get_args, write_config
 import os
 
 if __name__ == '__main__':
-    opts = get_options()
+    opts = get_args()
 
     write_config({
         'port': opts.port,
