@@ -364,7 +364,7 @@ class TreeManager:
         task = self.find_task_by_id(id)
         if not task:
             raise FocusTreeException("Task with id {} was not found.".format(id))
-        task_text = ''.join(words[2:])
+        task_text = ' '.join(words[2:])
         if not task_text:
             raise FocusTreeException("This command requires text after the id")
         task.add_child(TreeNode(text=task_text))
