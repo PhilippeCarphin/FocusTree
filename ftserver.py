@@ -164,10 +164,9 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         elif react_file.endswith('.map'):
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
-        elif react_file.endswith('svg'):
-            self.send_response(304)
-            self.send_header('Content-Type', 'text/plain')
-            pass
+        elif react_file.endswith('.svg'):
+            self.send_response(200)
+            self.send_header('Content-Type', 'image/svg')
         else:
             self.send_header('Content-Type', 'text/plain')
 
