@@ -118,7 +118,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         if self.path == '/':
             self.send_response(200)
             self.send_header('Access-Control-Allow-Origin', '*')
-            return self.send_tree()
+            return self.serve_static_react()
         elif self.path.startswith('/api/'):
             return self.serve_api()
         elif self.path.startswith('/simple-client/'):
@@ -152,6 +152,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         file_dir = os.path.dirname(os.path.realpath(__file__))
         client_dir =  os.path.join(file_dir, 'clients/ft-web-client/build/')
         react_file = os.path.normpath(client_dir + self.path)
+        print(f"Serving static react file {react_file}")
         if   react_file.endswith('css'):
             self.send_response(200)
             self.send_header('Content-Type', 'text/css')
@@ -168,7 +169,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', 'image/svg+xml')
         else:
-            self.send_header('Content-Type', 'text/plain')
+            self.send_header('Content-Type', 'text/html')
 
         self.end_headers()
         self.send_file(react_file)
@@ -184,7 +185,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         self.send_file(filename)
 
     def send_tree(self):
-        self.send_header('Content-type', 'text/plain')
+        self.send_header('Content-type', 'application/json')
         self.end_headers()
         # hopefully_the_tree = focus.TreeManager.from_dict(THE_TREE.to_dict())
         # hopefully_the_tree.current_task = THE_TREE.current_task
