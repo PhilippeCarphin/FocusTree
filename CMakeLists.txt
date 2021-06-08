@@ -10,7 +10,15 @@ endif()
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 include(orgmanpages)
-orgmanpages_add_man_targets()
+orgmanpages_add_man_target()
 
 include(CTest)
 add_custom_target(check COMMAND CTEST_OUTPUT_ON_FAILURE=true ${CMAKE_CTEST_COMMAND})
+
+install(DIRECTORY bin/ DESTINATION bin USE_SOURCE_PERMISSIONS)
+install(
+    DIRECTORY libexec/
+    DESTINATION libexec
+    USE_SOURCE_PERMISSIONS
+    PATTERN __pycache__ EXCLUDE
+)
