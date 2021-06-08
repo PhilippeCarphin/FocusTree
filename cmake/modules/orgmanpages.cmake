@@ -50,10 +50,14 @@ macro(orgmanpages_add_man_target)
 
         add_custom_command(
             OUTPUT ${target_file}
-            COMMAND emacs --batch -l ox-man ${org_file} -f org-man-export-to-man
-                && mkdir -p ${target_dir}
-                && mv ${man_file} ${target_file}
-            BYPRODUCTS ${man_file}~
+            # COMMAND emacs --batch -l ox-man ${org_file} -f org-man-export-to-man
+            #     && mkdir -p ${target_dir}
+            #     && mv ${man_file} ${target_file}
+            # BYPRODUCTS ${man_file}~
+            # COMMENT "Generating manpage : emacs --batch -l ox-man ${rel_org_file} -f org-man-export-to-man && mv ..."
+
+            # The '-s' is important
+            COMMAND mkdir -p ${target_dir} && pandoc -s -f org -t man ${org_file} -o ${target_file}
         )
         add_custom_target(${target_base} DEPENDS ${target_file})
 
