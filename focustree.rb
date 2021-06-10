@@ -11,7 +11,7 @@ class Focustree < Formula
 
   depends_on "cmake" => :build
   depends_on "pandoc" => :build
-  depends_on "python3" => :build
+  # depends_on "python3" => :build
 
   def install
     # ENV.deparallelize  # if your formula fails when building in parallel
@@ -19,7 +19,20 @@ class Focustree < Formula
     # https://rubydoc.brew.sh/Formula.html#std_configure_args-instance_method
     system "cmake", "-S", ".", "-B", "build", *std_cmake_args
     system "cmake", "--build", "build", "--target", "install"
-    system "python3", "-m", "pip", "install", "-r", "requirements.txt"
+    # system "python3", "-m", "pip", "install", "-r", "requirements.txt"
+  end
+
+  def caveats
+    s = <<~EOS
+      I am still figuring out how to package the python dependencies of this project with the homebrew formula.
+
+      In the meantime, please run
+
+        python3 -m pip termcolor prompt-toolkit Pygments requests termcolor
+
+      Thank you
+    EOS
+    s
   end
 
   test do
