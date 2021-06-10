@@ -11,6 +11,7 @@ class Focustree < Formula
 
   depends_on "cmake" => :build
   depends_on "pandoc" => :build
+  depends_on "python3" => :build
 
   def install
     # ENV.deparallelize  # if your formula fails when building in parallel
