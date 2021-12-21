@@ -202,8 +202,7 @@ if __name__ == "__main__":
 
     args = get_args()
 
-    if args.verbose:
-        print("FocusTree client using http://{}:{}"
+    print("FocusTree client using http://{}:{}"
               .format(args.host, args.port))
 
     try:
