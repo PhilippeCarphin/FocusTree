@@ -1,23 +1,20 @@
-package main
+package focus
 
 import (
-	// "encoding/json"
+	"encoding/json"
 	"fmt"
 )
 
-
-
 type TreeNode struct {
-	Text string
-	Done bool
-	ClosingNotes string
-	Id int
-	CreatedOn string
-	FinishedOn string
-	Children []*TreeNode
-	Parent *TreeNode
-	Manager *TreeManager
-
+	Text         string      `json:text`
+	Done         bool        `json:done`
+	ClosingNotes string      `json:closing_notes`
+	Id           int         `json:id`
+	CreatedOn    string      `json:created`
+	FinishedOn   string      `json:finished`
+	Children     []*TreeNode `json:children`
+	Parent       *TreeNode   `json:"-"` // Must be ignored for JSON or cycles get created
+	Manager      *TreeManager
 }
 
 type TreeManager struct {
@@ -27,7 +24,7 @@ type TreeManager struct {
 
 func NewTreeManager() *TreeManager {
 	return &TreeManager{
-		RootNodes: make([]*TreeNode,0),
+		RootNodes: make([]*TreeNode, 0),
 	}
 }
 
@@ -45,24 +42,34 @@ func NewTreeNode() *TreeNode {
 
 	return &TreeNode{
 		CreatedOn: "Now",
-		Children: make([]*TreeNode, 0),
+		Children:  make([]*TreeNode, 0),
 	}
 }
 
 func (n *TreeNode) AddChild(c *TreeNode) error {
-	c.Parent = n
+	// c.Parent = n
 	c.Manager = n.Manager
 	n.Children = append(n.Children, c)
 	return nil
 }
 
-func main(){
-	n := NewTreeNode()
-	fmt.Println(n)
-	tm := NewTreeManager()
-	tm.AddRootNode(n)
-	return
+func (n *TreeNode) ToJSON() ([]byte, error) {
+	b, err := json.MarshalIndent(n, "   ", "   ")
+	if err != nil {
+		return nil, fmt.Errorf("Error marshaling to json: %v", err)
+	}
+	return b, nil
 }
+
+func NodeFromJSON(b []byte) (*TreeNode, error) {
+	var newNode TreeNode
+	err := json.Unmarshal(b, &newNode)
+	if err != nil {
+		return nil, fmt.Errorf("Error marshaling to json: %v", err)
+	}
+	return &newNode, nil
+}
+
 //     """Basic noce of the focus tree.
 //
 //     The node has some info about itself and a 'children' attribute."""
