@@ -3,7 +3,10 @@ package focus
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
+
+var TreeNodeIdCounter = 0
 
 type TreeNode struct {
 	Text         string      `json:text`
@@ -14,12 +17,12 @@ type TreeNode struct {
 	FinishedOn   string      `json:finished`
 	Children     []*TreeNode `json:children`
 	Parent       *TreeNode   `json:"-"` // Must be ignored for JSON or cycles get created
-	Manager      *TreeManager
+	Depth int   `json:"-"` // Must be ignored for JSON or cycles get created
+	Manager      *TreeManager `json:"-"`
 }
 
 type TreeManager struct {
 	RootNodes []*TreeNode
-	currentId int
 }
 
 func NewTreeManager() *TreeManager {
@@ -29,25 +32,26 @@ func NewTreeManager() *TreeManager {
 }
 
 func (tm *TreeManager) AddRootNode(n *TreeNode) error {
-	n.Id = tm.currentId
-	tm.currentId += 1
-
 	n.Manager = tm
 	tm.RootNodes = append(tm.RootNodes, n)
-
 	return nil
 }
 
 func NewTreeNode() *TreeNode {
 
-	return &TreeNode{
+	newNode := &TreeNode{
+		Id: TreeNodeIdCounter,
 		CreatedOn: "Now",
 		Children:  make([]*TreeNode, 0),
 	}
+
+	TreeNodeIdCounter++
+
+	return newNode
 }
 
 func (n *TreeNode) AddChild(c *TreeNode) error {
-	// c.Parent = n
+	c.Parent = n
 	c.Manager = n.Manager
 	n.Children = append(n.Children, c)
 	return nil
@@ -69,6 +73,92 @@ func NodeFromJSON(b []byte) (*TreeNode, error) {
 	}
 	return &newNode, nil
 }
+
+func (n *TreeNode) IsDone() bool {
+	for _, c := range n.Children {
+		if ! c.IsDone() {
+			return false
+		}
+	}
+	return n.Done
+}
+
+func (n *TreeNode) FindSubtaskById(id int) (*TreeNode) {
+
+	if n.Id == id {
+		return n
+	}
+
+	for _, c := range n.Children {
+
+		cId := c.FindSubtaskById(id)
+
+		if cId != nil {
+			return cId
+		}
+
+	}
+
+	return nil
+
+}
+
+func (n *TreeNode) Ancestors() []*TreeNode {
+	ancestors := make([]*TreeNode, 0)
+	for current := n ; current != nil ; current=current.Parent {
+		ancestors = append(ancestors, current)
+	}
+	return ancestors
+}
+
+func (n *TreeNode) PrintableAncestors() string {
+	ans := n.Ancestors()
+	fmt.Printf("Ancestors = %v\n", ans)
+	fmt.Printf("len Ancestors = %d\n", len(ans))
+	b := strings.Builder{}
+	p := strings.Builder{}
+	fmt.Println("ASDF")
+	for i := len(ans)-1 ; 0 <= i ; i-- {
+		fmt.Printf("Inside the for\n")
+		fmt.Fprintf(&b,"%s^---%s\n", p.String(), ans[i].Text)
+		fmt.Fprint(&p, "    ")
+	}
+
+	return b.String()
+}
+
+func (n *TreeNode) UpdateDepth() {
+	if n.Parent == nil {
+		n.Depth = 0
+	} else {
+		n.Depth = n.Parent.Depth + 1
+	}
+}
+
+
+
+func (n *TreeNode) PrintableTree(depth int, prefix string) string {
+	n.UpdateDepth()
+	o := strings.Builder{}
+	if n.Depth == 0 {
+		fmt.Fprintf(&o, n.Text)
+	} else {
+		fmt.Fprintf(&o, "%s^---%s", prefix, n.Text)
+	}
+
+	for i,c := range n.Children {
+		var newPrefix string
+		if len(n.Children) > 1 && i < len(n.Children) {
+			newPrefix = prefix + "   |"
+		} else {
+			newPrefix = prefix + "    "
+			fmt.Println("ASSHOLIO")
+		}
+		fmt.Fprintf(&o, "%s", c.PrintableTree(depth+1, newPrefix))
+	}
+	return o.String()
+}
+
 
 //     """Basic noce of the focus tree.
 //
