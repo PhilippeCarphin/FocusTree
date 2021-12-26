@@ -2,8 +2,9 @@ package focus
 
 import (
 	"encoding/json"
+	// "fmt"
+	"os"
 	"testing"
-	"fmt"
 )
 
 func TestBuildTree(t *testing.T) {
@@ -78,22 +79,78 @@ func TestPrintableAncestors(t *testing.T) {
 	n.AddChild(m)
 	// fmt.Println(m.PrintableAncestors())
 }
-func TestPrintableTree(t *testing.T) {
+func newTestTree() *TreeNode {
 	TreeNodeIdCounter = 0
+	r := NewTreeNode()
+	r.Text = "R Text"
+
 	n := NewTreeNode()
+	n.Text = "N Text"
 	m := NewTreeNode()
+	m.Text = "M Text"
+
 	w := NewTreeNode()
+	w.Text = "W Text"
+	x := NewTreeNode()
+	x.Text = "X Text"
+	y := NewTreeNode()
+	y.Text = "Y Text"
+	z := NewTreeNode()
+	z.Text = "Z Text"
+
 	q := NewTreeNode()
 	p := NewTreeNode()
 	q.Text = "Q Text"
 	p.Text = "P Text"
-	w.Text = "W Text"
-	m.Text = "M Text"
-	n.Text = "N Text"
-	n.AddChild(m)
+
+	r.AddChild(m)
+	r.AddChild(n)
+
 	n.AddChild(w)
+	n.AddChild(x)
+	x.AddChild(y)
+	w.AddChild(z)
+
 	m.AddChild(p)
 	m.AddChild(q)
-	fmt.Println(m.PrintableTree())
-	fmt.Println(n.PrintableTree())
+
+	return r
+}
+
+func TestPrintableTree(t *testing.T) {
+	r := newTestTree()
+	expected := `R Text
+ ├─── M Text
+ │    ├─── P Text
+ │    └─── Q Text
+ └─── N Text
+      ├─── W Text
+      │    └─── Z Text
+      └─── X Text
+           └─── Y Text
+`
+	result := r.PrintableTree()
+	if result != expected {
+		t.Fatalf("Expected '%s'\nGot '%s'", expected, result)
+	}
+}
+
+func TestSaveTreeManager(t *testing.T) {
+	r := newTestTree()
+	tm := NewTreeManager()
+
+	tm.RootNodes = append(tm.RootNodes, r)
+
+	tm.ToFile("tree_manager_save.json")
+
+	expected, err := os.ReadFile("tree_manager_save_Expected.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := os.ReadFile("tree_manager_save.json")
+
+	if string(result) != string(expected) {
+		t.Fatalf("Expected '%s', got '%s'", expected, result)
+	}
+
 }
