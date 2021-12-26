@@ -76,7 +76,7 @@ func TestPrintableAncestors(t *testing.T) {
 	m.Text = "M Text"
 	n.Text = "N Text"
 	n.AddChild(m)
-	fmt.Println(m.PrintableAncestors())
+	// fmt.Println(m.PrintableAncestors())
 }
 func TestPrintableTree(t *testing.T) {
 	TreeNodeIdCounter = 0
@@ -84,12 +84,16 @@ func TestPrintableTree(t *testing.T) {
 	m := NewTreeNode()
 	w := NewTreeNode()
 	q := NewTreeNode()
+	p := NewTreeNode()
 	q.Text = "Q Text"
+	p.Text = "P Text"
 	w.Text = "W Text"
 	m.Text = "M Text"
 	n.Text = "N Text"
 	n.AddChild(m)
 	n.AddChild(w)
+	m.AddChild(p)
 	m.AddChild(q)
-	fmt.Println(n.PrintableTree(0, "\n"))
+	fmt.Println(m.PrintableTree())
+	fmt.Println(n.PrintableTree())
 }

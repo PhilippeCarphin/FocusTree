@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"io"
 )
 
 var TreeNodeIdCounter = 0
@@ -135,28 +136,35 @@ func (n *TreeNode) UpdateDepth() {
 	}
 }
 
+const lastChild = "└───"
+const interChild = "├───"
+const connectExtend = "│   "
 
-
-func (n *TreeNode) PrintableTree(depth int, prefix string) string {
-	n.UpdateDepth()
+func (n *TreeNode) PrintableTree() string {
 	o := strings.Builder{}
+	n.PrintableTreeInternal(&o, 0, "")
+	return o.String()
+}
+
+func (n *TreeNode) PrintableTreeInternal(o io.Writer, depth int, prefix string)  {
+	n.UpdateDepth()
+	fmt.Printf("Printing tree %s with prefix %s\n", n.Text, prefix)
 	if n.Depth == 0 {
-		fmt.Fprintf(&o, n.Text)
+		fmt.Fprintf(o, "%s\n", n.Text)
 	} else {
-		fmt.Fprintf(&o, "%s^---%s", prefix, n.Text)
+		fmt.Fprintf(o, "%s%s%s\n", prefix, lastChild, n.Text)
+
 	}
 
 	for i,c := range n.Children {
 		var newPrefix string
 		if len(n.Children) > 1 && i < len(n.Children) {
-			newPrefix = prefix + "   |"
+			newPrefix = prefix + "│   "
 		} else {
 			newPrefix = prefix + "    "
-			fmt.Println("ASSHOLIO")
 		}
-		fmt.Fprintf(&o, "%s", c.PrintableTree(depth+1, newPrefix))
+		c.PrintableTreeInternal(o, depth+1, newPrefix)
 	}
-	return o.String()
 }
 
 
