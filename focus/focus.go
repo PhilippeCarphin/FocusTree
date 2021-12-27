@@ -91,9 +91,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 	switch string(body) {
 	case "current":
-		fmt.Println("CURRENT")
 		to := TheTreeManager.Current.PrintableAncestors()
-		fmt.Println(to)
 		j, err := json.Marshal(TerminalClientResponse{
 			Error:      make([]string, 0),
 			TermOutput: to,
