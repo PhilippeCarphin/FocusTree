@@ -126,6 +126,9 @@ func (tm *TreeManager) Move(n *TreeNode) {
 }
 
 func (tm *TreeManager) ToFile(filename string) error {
+	if tm.Current != nil {
+		tm.CurrentTaskId = tm.Current.Id
+	}
 	b, err := json.Marshal(tm)
 	if err != nil {
 		return err
