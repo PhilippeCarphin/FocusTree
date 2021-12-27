@@ -77,7 +77,7 @@ func (tm *TreeManager) handleRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 type TerminalClientResponse struct {
-	Error      []string `json:"error"`
+	Error      string   `json:"error"`
 	TermOutput string   `json:"term_output"`
 	Command    string   `json:"command"`
 	Status     int      `json:"status"`
@@ -90,19 +90,22 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var tr = TerminalClientResponse{
-		Error: make([]string, 0),
 		Status:     0,
 		Command: string(body),
 	}
-	switch string(body) {
+	words := strings.Split(string(body), " ")
+	command := words[0]
+	switch command {
 	case "current":
 		tr.TermOutput = TheTreeManager.Current.PrintableAncestors()
 	case "tree":
 		tr.TermOutput = TheTreeManager.PrintableTree("")
 	case "subtask":
 	default:
+		tr.TermOutput = ""
+		tr.Error = fmt.Sprintf("Unknown command %s", string(body))
+		tr.Status = 1
 		fmt.Println(string(body))
-		fmt.Fprint(w, TheTreeManager.PrintableTree(""))
 	}
 
 	j, err := json.Marshal(tr)
