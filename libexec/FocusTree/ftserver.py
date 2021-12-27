@@ -152,7 +152,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         file_dir = os.path.dirname(os.path.realpath(__file__))
         client_dir =  os.path.join(file_dir, 'clients/ft-web-client/build/')
         react_file = os.path.normpath(client_dir + self.path)
-        print(f"Serving static react file {react_file}")
+        print("Serving static react file {react_file}".format(react_file=react_file))
         if   react_file.endswith('css'):
             self.send_response(200)
             self.send_header('Content-Type', 'text/css')
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 
         args = get_args()
 
-        filename = f'.focustree.save.{args.port}.json'
+        filename = '.focustree.save.{port}.json'.format(port=args.port)
         if args.config_file:
             directory = os.path.dirname(args.config_file)
         else:
@@ -215,14 +215,14 @@ if __name__ == "__main__":
         except:
             THE_TREE = focus.TreeManager()
 
-        print(f'Starting server on host {args.host}, port {args.port}')
+        print('Starting server on host {host}, port {port}'.format(host=args.host, port=args.port))
 
         server = HTTPServer(
             (args.host, args.port),
             FocusTreeRequestHandler,
         )
 
-        print(f"Server is started on {args.host} port {args.port}, save file is {save_file}")
+        print('Server is started on host {host}, port {port}'.format(host=args.host, port=args.port))
         server.serve_forever()
 
     except KeyboardInterrupt:
