@@ -48,7 +48,13 @@ func NewTreeManager() *TreeManager {
 }
 
 func FocusTreeServer() {
-	TheTreeManager = NewTreeManager()
+	var err error
+	TheTreeManager, err = TreeManagerFromFile("tree_manager_save_Expected.json")
+	if err != nil {
+		panic(err)
+	}
+
+	TheTreeManager.Current = TheTreeManager.RootNodes[0].Children[0]
 	TheTreeManager.RootNodes = append(TheTreeManager.RootNodes, newTestTree())
 	m := mux.NewRouter()
 	m.HandleFunc("/", TheTreeManager.handleRequest).Methods("GET")
@@ -73,14 +79,41 @@ func (tm *TreeManager) handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(j)
 }
+
+type TerminalClientResponse struct {
+	Error      []string `json:"error"`
+	TermOutput string   `json:"term_output"`
+	Command    string   `json:"command"`
+	Status     string   `json:"status"`
+}
+
 func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Function handleRequests")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		fmt.Printf("Error during handling of command : %v", err)
+		fmt.Printf("Error getting body of request : %v", err)
 	}
-	fmt.Println(string(body))
-	fmt.Fprint(w, TheTreeManager.PrintableTree())
+
+	switch string(body) {
+	case "current":
+		fmt.Println("CURRENT")
+		to := TheTreeManager.Current.PrintableAncestors()
+		fmt.Println(to)
+		j, err := json.Marshal(TerminalClientResponse{
+			Error:      make([]string, 0),
+			TermOutput: "AAA" + to + "BBB",
+			Command:    "current",
+			Status:     "OK", // Stupid fucking choice WTF was I thinking, use the ints 200 or 0, not the string "OK" Geez
+		})
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.Write(j)
+
+	default:
+		fmt.Println(string(body))
+		fmt.Fprint(w, TheTreeManager.PrintableTree())
+	}
 }
 func (tm *TreeManager) Move(n *TreeNode) {
 	tm.moveStack = append(tm.moveStack, tm.Current)
@@ -93,6 +126,19 @@ func (tm *TreeManager) ToFile(filename string) error {
 		return err
 	}
 	return os.WriteFile(filename, b, 0644)
+}
+
+func TreeManagerFromFile(filename string) (*TreeManager, error) {
+	tm := TreeManager{}
+	b, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading tree manager file : %v", err)
+	}
+	err = json.Unmarshal(b, &tm)
+	if err != nil {
+		return nil, fmt.Errorf("Error unmarshaling contents of file : %v", err)
+	}
+	return &tm, nil
 }
 
 func (tm *TreeManager) BacktrackMove() *TreeNode {
