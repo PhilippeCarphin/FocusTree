@@ -3,30 +3,41 @@ package focus
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"github.com/gorilla/mux"
 	"io"
+	"net"
+	"net/http"
+	"os"
 	"strings"
 )
+
+var TheTreeManager *TreeManager = nil
 
 var TreeNodeIdCounter = 0
 
 type TreeNode struct {
-	Text         string       `json:text`
-	Done         bool         `json:done`
-	ClosingNotes string       `json:closing_notes`
-	Id           int          `json:id`
-	CreatedOn    string       `json:created`
-	FinishedOn   string       `json:finished`
-	Children     []*TreeNode  `json:children`
-	Parent       *TreeNode    `json:"-"` // Must be ignored for JSON or cycles get created
-	Depth        int          `json:"-"`
-	Manager      *TreeManager `json:"-"`
+	Text     string       `json:"text"`
+	Id       int          `json:"id"`
+	Info     TreeNodeInfo `json:"info"`
+	Children []*TreeNode  `json:"children"`
+	Parent   *TreeNode    `json:"-"` // Must be ignored for JSON or cycles get created
+	Depth    int          `json:"-"`
+	Manager  *TreeManager `json:"-"`
+}
+
+type TreeNodeInfo struct {
+	Done         bool   `json:"done"`
+	CreatedOn    string `json:"created"`
+	ClosingNotes string `json:"closing_notes"`
+	FinishedOn   string `json:"finished"`
 }
 
 type TreeManager struct {
-	RootNodes []*TreeNode `json:root_nodes`
-	Current   *TreeNode   `json:"-"`
-	moveStack []*TreeNode `json:"-"`
+	RootNodes     []*TreeNode `json:"root_nodes"`
+	CurrentTask   string      `json:"current_task"`
+	Current       *TreeNode   `json:"-"`
+	CurrentTaskId int         `json:"current_task_id"`
+	moveStack     []*TreeNode `json:"-"`
 }
 
 func NewTreeManager() *TreeManager {
@@ -36,13 +47,48 @@ func NewTreeManager() *TreeManager {
 	}
 }
 
+func FocusTreeServer() {
+	TheTreeManager = NewTreeManager()
+	TheTreeManager.RootNodes = append(TheTreeManager.RootNodes, newTestTree())
+	m := mux.NewRouter()
+	m.HandleFunc("/", TheTreeManager.handleRequest).Methods("GET")
+	m.HandleFunc("/api/tree", TheTreeManager.handleRequest).Methods("GET")
+	m.HandleFunc("/api/send-command", TheTreeManager.handleCommand).Methods("POST")
+
+	l, err := net.Listen("tcp", "0.0.0.0:5052")
+	if err != nil {
+		panic(err)
+	}
+	p := l.Addr().(*net.TCPAddr).Port
+	fmt.Println(p)
+
+	http.Serve(l, m)
+}
+
+func (tm *TreeManager) handleRequest(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Function handleRequests")
+	j, err := json.MarshalIndent(TheTreeManager, "    ", "    ")
+	if err != nil {
+		fmt.Printf("Error Could not marshal tree to JSON : %v", err)
+	}
+	w.Write(j)
+}
+func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Function handleRequests")
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Printf("Error during handling of command : %v", err)
+	}
+	fmt.Println(string(body))
+	fmt.Fprint(w, TheTreeManager.PrintableTree())
+}
 func (tm *TreeManager) Move(n *TreeNode) {
 	tm.moveStack = append(tm.moveStack, tm.Current)
 	tm.Current = n
 }
 
 func (tm *TreeManager) ToFile(filename string) error {
-	b, err :=  json.Marshal(tm)
+	b, err := json.Marshal(tm)
 	if err != nil {
 		return err
 	}
@@ -62,12 +108,22 @@ func (tm *TreeManager) AddRootNode(n *TreeNode) error {
 	return nil
 }
 
+func (tm *TreeManager) PrintableTree() string {
+	tree := strings.Builder{}
+	for _, r := range tm.RootNodes {
+		fmt.Fprint(&tree, r.PrintableTree())
+	}
+	return tree.String()
+}
+
 func NewTreeNode() *TreeNode {
 
 	newNode := &TreeNode{
-		Id:        TreeNodeIdCounter,
-		CreatedOn: "Now",
-		Children:  make([]*TreeNode, 0),
+		Id: TreeNodeIdCounter,
+		Info: TreeNodeInfo{
+			CreatedOn: "Now",
+		},
+		Children: make([]*TreeNode, 0),
 	}
 
 	TreeNodeIdCounter++
@@ -105,7 +161,7 @@ func (n *TreeNode) IsDone() bool {
 			return false
 		}
 	}
-	return n.Done
+	return n.Info.Done
 }
 
 func (n *TreeNode) FindSubtaskById(id int) *TreeNode {
@@ -196,6 +252,94 @@ func (n *TreeNode) PrintableTreeInternal(o io.Writer, prefix string) {
 
 		c.PrintableTreeInternal(o, nextPrefix)
 	}
+}
+
+func (tm *TreeManager) Subtask(t *TreeNode) error {
+	tm.Current.AddChild(t)
+	tm.Current = t
+	return nil
+}
+
+func (tm *TreeManager) NewTask(t *TreeNode) error {
+	tm.RootNodes = append(tm.RootNodes, t)
+	return nil
+}
+
+func (tm *TreeManager) NextTask(t *TreeNode) error {
+	parent := tm.Current.Parent
+	if parent == nil {
+		tm.RootNodes = append(tm.RootNodes, t)
+	} else {
+		parent.AddChild(t)
+	}
+	return nil
+}
+
+func (tm *TreeManager) Done(closingNotes string) error {
+	// Change 'Done' attribute of current task
+	// Look for descendants of current task that are not done
+	// Look for descendant of parent that is not done
+	// keep going until parent is nil
+	// Look for descendant of next root nodes that are not done
+	return nil
+}
+
+func (tm *TreeManager) FindSubtaskById(id int) *TreeNode {
+	for _, r := range tm.RootNodes {
+		n := r.FindSubtaskById(id)
+		if n != nil {
+			return n
+		}
+	}
+	return nil
+}
+
+func (tm *TreeManager) SwitchTask(id int) error {
+	n := tm.FindSubtaskById(id)
+	if n == nil {
+		return fmt.Errorf("No node with id '%d' was found", id)
+	}
+
+	tm.Current = n
+	return nil
+}
+
+func newTestTree() *TreeNode {
+	TreeNodeIdCounter = 0
+	r := NewTreeNode()
+	r.Text = "R Text"
+
+	n := NewTreeNode()
+	n.Text = "N Text"
+	m := NewTreeNode()
+	m.Text = "M Text"
+
+	w := NewTreeNode()
+	w.Text = "W Text"
+	x := NewTreeNode()
+	x.Text = "X Text"
+	y := NewTreeNode()
+	y.Text = "Y Text"
+	z := NewTreeNode()
+	z.Text = "Z Text"
+
+	q := NewTreeNode()
+	p := NewTreeNode()
+	q.Text = "Q Text"
+	p.Text = "P Text"
+
+	r.AddChild(m)
+	r.AddChild(n)
+
+	n.AddChild(w)
+	n.AddChild(x)
+	x.AddChild(y)
+	w.AddChild(z)
+
+	m.AddChild(p)
+	m.AddChild(q)
+
+	return r
 }
 
 //     """Basic noce of the focus tree.

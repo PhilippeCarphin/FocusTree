@@ -1,3 +1,5 @@
-module github.com/philippecarphin/focustree
+module github.com/philippecarphin/FocusTree
 
 go 1.16
+
+require github.com/gorilla/mux v1.8.0

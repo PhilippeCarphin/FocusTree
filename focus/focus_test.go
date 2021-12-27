@@ -21,8 +21,8 @@ func TestJson(t *testing.T) {
 	n := NewTreeNode()
 	m := NewTreeNode()
 	m.Text = "M Text"
-	m.Done = false
-	m.ClosingNotes = "M Closing Notes"
+	m.Info.Done = false
+	m.Info.ClosingNotes = "M Closing Notes"
 	n.AddChild(m)
 	b, err := json.MarshalIndent(n, "   ", "   ")
 	if err != nil {
@@ -79,43 +79,6 @@ func TestPrintableAncestors(t *testing.T) {
 	n.AddChild(m)
 	// fmt.Println(m.PrintableAncestors())
 }
-func newTestTree() *TreeNode {
-	TreeNodeIdCounter = 0
-	r := NewTreeNode()
-	r.Text = "R Text"
-
-	n := NewTreeNode()
-	n.Text = "N Text"
-	m := NewTreeNode()
-	m.Text = "M Text"
-
-	w := NewTreeNode()
-	w.Text = "W Text"
-	x := NewTreeNode()
-	x.Text = "X Text"
-	y := NewTreeNode()
-	y.Text = "Y Text"
-	z := NewTreeNode()
-	z.Text = "Z Text"
-
-	q := NewTreeNode()
-	p := NewTreeNode()
-	q.Text = "Q Text"
-	p.Text = "P Text"
-
-	r.AddChild(m)
-	r.AddChild(n)
-
-	n.AddChild(w)
-	n.AddChild(x)
-	x.AddChild(y)
-	w.AddChild(z)
-
-	m.AddChild(p)
-	m.AddChild(q)
-
-	return r
-}
 
 func TestPrintableTree(t *testing.T) {
 	r := newTestTree()
@@ -143,7 +106,7 @@ func TestSaveTreeManager(t *testing.T) {
 
 	tm.ToFile("tree_manager_save.json")
 
-	expected, err := os.ReadFile("tree_manager_save_Expected.json")
+	expected, err := os.ReadFile("../tree_manager_save_Expected.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,5 +115,8 @@ func TestSaveTreeManager(t *testing.T) {
 	if string(result) != string(expected) {
 		t.Fatalf("Expected '%s', got '%s'", expected, result)
 	}
+
+	// fmt.Printf("tm.PrintableTree() : '%s'\n", tm.PrintableTree())
+	// fmt.Println(r.PrintableTree())
 
 }
