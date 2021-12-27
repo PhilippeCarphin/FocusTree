@@ -54,8 +54,6 @@ func FocusTreeServer() {
 		panic(err)
 	}
 
-	TheTreeManager.Current = TheTreeManager.RootNodes[0].Children[0]
-	TheTreeManager.RootNodes = append(TheTreeManager.RootNodes, newTestTree())
 	m := mux.NewRouter()
 	m.HandleFunc("/", TheTreeManager.handleRequest).Methods("GET")
 	m.HandleFunc("/api/tree", TheTreeManager.handleRequest).Methods("GET")
@@ -138,7 +136,21 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error unmarshaling contents of file : %v", err)
 	}
+
+	for _, r := range tm.RootNodes {
+		setParents(r)
+	}
+
+	tm.Current = tm.FindSubtaskById(tm.CurrentTaskId)
+
 	return &tm, nil
+}
+
+func setParents(tree *TreeNode) {
+	for _, c := range tree.Children {
+		c.Parent = tree
+		setParents(c)
+	}
 }
 
 func (tm *TreeManager) BacktrackMove() *TreeNode {
