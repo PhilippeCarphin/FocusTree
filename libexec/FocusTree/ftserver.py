@@ -62,7 +62,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             THE_TREE = focus.TreeManager.load_from_file(args)
 
     def do_POST(self):
-        status = 'OK'
+        status = 0
         errors = None
         term_output = None
         term_error = None
@@ -76,10 +76,10 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
             try:
                 term_output = self.handle_command(command_line)
             except focus.FocusTreeException as e:
-                status = 'error'
+                status = 1
                 errors = str(e)
             except Exception as e:
-                status = 'error'
+                status = 1
                 errors = str(e)
                 raise e
             finally:

@@ -41,11 +41,11 @@ def eval_command(command_line):
             resp = save_org_command(''.join(words[1:]), the_tree)
         elif operation == 'clear':
             os.system('clear')
-            resp = {'status':'OK', 'term_output': ''}
+            resp = {'status':0, 'term_output': ''}
         elif operation == 'save-file':
             the_tree = get_tree()
             the_tree.save_to_file(words[1])
-            resp = {'status':'OK', 'term_output': ''}
+            resp = {'status':0, 'term_output': ''}
         elif operation == 'send-file':
             request_url = f'http://{args.host}:{args.port}/api/send-tree'
             tree = focus.TreeManager.load_from_file(words[1])
@@ -57,8 +57,8 @@ def eval_command(command_line):
     return resp
 
 def print_output(resp):
-    if resp['status'] != 'OK':
-        print(colored('ERROR : ' + resp['error'], 'red'))
+    if resp['status'] != 0:
+        print(colored('ERROR : ' + str(resp['error']), 'red'))
     print(resp['term_output'])
 
 def loop(prompt_sesh):
@@ -169,7 +169,7 @@ def save_org_command(filename, tree):
         f.write(tree.to_org())
     return {
         'command': 'save-org ' + filename,
-        'status': 'OK',
+        'status': 0,
         'error': None,
         'term_output': 'saved file {}'.format(os.getcwd() + '/' + filename),
         'term_error':''
