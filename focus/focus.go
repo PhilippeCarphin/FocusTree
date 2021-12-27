@@ -145,8 +145,28 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 		setParents(r)
 	}
 
+
 	tm.Current = tm.FindSubtaskById(tm.CurrentTaskId)
+
+	// Reassigning IDs is how I'm making the global TreeNodeIdCounter
+	// go up after having read the file.  Since json.Unmarshal does
+	// not use the constructor which would increment the counter, the
+	// counter would still be at 0 after having loaded the file.
+	//
+	// In Python, The constructor is run each time a node is created, but
+	// in the from_dict method, the ID used is the one from the JSON.
+	// But creating the node still increments the counter so at the end,
+	// the counter is qual to the number of nodes but nothing prevents the
+	// file from having IDs that would cause problems:
+	//
+	// Suppose we have tree nodes with Ids 2,3,4.  Then in Python, after
+	// reading the file, the counter will be at 3, and the next time we
+	// create add a node to the tree, it will be given the id 3.
+	// If we want the nodes to keep the Ids from the file, we should find
+	// the maximum of the Ids and set the counter one above that.
+
 	tm.ReassignIds()
+	tm.CurrentTaskId = tm.Current.Id
 
 	return &tm, nil
 }
@@ -167,6 +187,32 @@ func (tm *TreeManager) ReassignIds() {
 		visit(r, giveId)
 	}
 	TreeNodeIdCounter = currentId
+}
+
+func (tm *TreeManager) maxId() int {
+	var max = 0
+	for _, r := range tm.RootNodes {
+		m := r.maxId()
+		if m > max {
+			max = m
+		}
+	}
+	return max
+
+}
+
+func (n *TreeNode) maxId() int {
+	var max = 0
+	for _, c := range n.Children {
+		m := c.maxId()
+		if m > max {
+			max = m
+		}
+	}
+	if n.Id > max {
+		max = n.Id
+	}
+	return max
 }
 
 func setParents(tree *TreeNode) {
