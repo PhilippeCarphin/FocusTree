@@ -80,7 +80,7 @@ type TerminalClientResponse struct {
 	Error      []string `json:"error"`
 	TermOutput string   `json:"term_output"`
 	Command    string   `json:"command"`
-	Status     string   `json:"status"`
+	Status     int      `json:"status"`
 }
 
 func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
@@ -98,7 +98,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 			Error:      make([]string, 0),
 			TermOutput: to,
 			Command:    "current",
-			Status:     "OK", // Stupid fucking choice WTF was I thinking, use the ints 200 or 0, not the string "OK" Geez
+			Status:     0,
 		})
 		if err != nil {
 			fmt.Println(err)
