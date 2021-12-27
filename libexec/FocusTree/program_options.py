@@ -2,6 +2,7 @@ import os
 import json
 from termcolor import colored
 import argparse
+import sys
 
 FT_CONFIG_FILE_NAME = '.focustree.json'
 
@@ -39,7 +40,12 @@ def command_line_parser():
     p.add_argument("--config-file", help="Config file for persistent options")
     p.add_argument("-v", "--verbose", action="store_true", help="Address of the server")
     p.add_argument("ft_command", nargs='*', help="(optional) The command to send to focus tree, no command will launch an interactive client")
-    return p.parse_args()
+    p.add_argument("--version", help="Print version and exit", action='store_true')
+    args = p.parse_args()
+    if args.version:
+        print("1.2.0")
+        sys.exit(0)
+    return args
 
 def get_args(look_for_config_file=True):
     cl_opts = command_line_parser()
