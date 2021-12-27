@@ -89,36 +89,27 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Error getting body of request : %v", err)
 	}
 
+	var tr = TerminalClientResponse{
+		Error: make([]string, 0),
+		Status:     0,
+		Command: string(body),
+	}
 	switch string(body) {
 	case "current":
-		to := TheTreeManager.Current.PrintableAncestors()
-		j, err := json.Marshal(TerminalClientResponse{
-			Error:      make([]string, 0),
-			TermOutput: to,
-			Command:    "current",
-			Status:     0,
-		})
-		if err != nil {
-			fmt.Println(err)
-		}
-		w.Write(j)
+		tr.TermOutput = TheTreeManager.Current.PrintableAncestors()
 	case "tree":
-		to := TheTreeManager.PrintableTree("")
-		j, err := json.Marshal(TerminalClientResponse{
-			Error:      make([]string, 0),
-			TermOutput: to[:len(to)-1],
-			Command:    "current",
-			Status:     0,
-		})
-		if err != nil {
-			fmt.Println(err)
-		}
-		w.Write(j)
-
+		tr.TermOutput = TheTreeManager.PrintableTree("")
+	case "subtask":
 	default:
 		fmt.Println(string(body))
 		fmt.Fprint(w, TheTreeManager.PrintableTree(""))
 	}
+
+	j, err := json.Marshal(tr)
+	if err != nil {
+		fmt.Println(err)
+	}
+	w.Write(j)
 }
 func (tm *TreeManager) Move(n *TreeNode) {
 	tm.moveStack = append(tm.moveStack, tm.Current)
