@@ -102,6 +102,18 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 		}
 		w.Write(j)
+	case "tree":
+		to := TheTreeManager.PrintableTree()
+		j, err := json.Marshal(TerminalClientResponse{
+			Error:      make([]string, 0),
+			TermOutput: to[:len(to)-1],
+			Command:    "current",
+			Status:     0,
+		})
+		if err != nil {
+			fmt.Println(err)
+		}
+		w.Write(j)
 
 	default:
 		fmt.Println(string(body))
