@@ -203,11 +203,17 @@ if __name__ == "__main__":
         args = get_args()
 
         filename = '.focustree.save.{port}.json'.format(port=args.port)
-        if args.config_file:
-            directory = os.path.dirname(args.config_file)
+        save_file = None
+
+        if args.save_file:
+            save_file = args.save_file
         else:
-            directory = os.environ['HOME']
-        save_file = os.path.join(directory, filename)
+            if args.config_file:
+                directory = os.path.dirname(args.config_file)
+            else:
+                directory = os.environ['HOME']
+
+            save_file = os.path.join(directory, filename)
 
         THE_TREE = focus.TreeManager()
         try:
