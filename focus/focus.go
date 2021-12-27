@@ -278,7 +278,7 @@ func (n *TreeNode) PrintableAncestors() string {
 	b := strings.Builder{}
 	p := strings.Builder{}
 	for i := len(ans) - 1; 0 <= i; i-- {
-		fmt.Fprintf(&b, "%s^---%s\n", p.String(), ans[i].Text)
+		fmt.Fprintf(&b, "%s%s%s\n", p.String(), lastChild, ans[i].Text)
 		fmt.Fprint(&p, "    ")
 	}
 
