@@ -63,14 +63,12 @@ func FocusTreeServer() {
 	if err != nil {
 		panic(err)
 	}
-	p := l.Addr().(*net.TCPAddr).Port
-	fmt.Println(p)
+	// p := l.Addr().(*net.TCPAddr).Port
 
 	http.Serve(l, m)
 }
 
 func (tm *TreeManager) handleRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Function handleRequests")
 	j, err := json.MarshalIndent(TheTreeManager, "    ", "    ")
 	if err != nil {
 		fmt.Printf("Error Could not marshal tree to JSON : %v", err)
@@ -86,7 +84,6 @@ type TerminalClientResponse struct {
 }
 
 func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Function handleRequests")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Printf("Error getting body of request : %v", err)
@@ -99,7 +96,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(to)
 		j, err := json.Marshal(TerminalClientResponse{
 			Error:      make([]string, 0),
-			TermOutput: "AAA" + to + "BBB",
+			TermOutput: to,
 			Command:    "current",
 			Status:     "OK", // Stupid fucking choice WTF was I thinking, use the ints 200 or 0, not the string "OK" Geez
 		})
@@ -252,13 +249,9 @@ func (n *TreeNode) Ancestors() []*TreeNode {
 
 func (n *TreeNode) PrintableAncestors() string {
 	ans := n.Ancestors()
-	fmt.Printf("Ancestors = %v\n", ans)
-	fmt.Printf("len Ancestors = %d\n", len(ans))
 	b := strings.Builder{}
 	p := strings.Builder{}
-	fmt.Println("ASDF")
 	for i := len(ans) - 1; 0 <= i; i-- {
-		fmt.Printf("Inside the for\n")
 		fmt.Fprintf(&b, "%s^---%s\n", p.String(), ans[i].Text)
 		fmt.Fprint(&p, "    ")
 	}
