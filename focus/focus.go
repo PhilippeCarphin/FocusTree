@@ -146,8 +146,27 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 	}
 
 	tm.Current = tm.FindSubtaskById(tm.CurrentTaskId)
+	tm.ReassignIds()
 
 	return &tm, nil
+}
+func visit(n *TreeNode, f func(*TreeNode)) {
+	f(n)
+	for _,c := range n.Children {
+		visit(c, f)
+	}
+}
+
+func (tm *TreeManager) ReassignIds() {
+	var currentId int = 0
+	giveId :=  func(n *TreeNode) {
+		n.Id = currentId
+		currentId++
+	}
+	for _, r := range tm.RootNodes {
+		visit(r, giveId)
+	}
+	TreeNodeIdCounter = currentId
 }
 
 func setParents(tree *TreeNode) {
