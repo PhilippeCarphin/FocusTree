@@ -103,7 +103,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write(j)
 	case "tree":
-		to := TheTreeManager.PrintableTree()
+		to := TheTreeManager.PrintableTree("")
 		j, err := json.Marshal(TerminalClientResponse{
 			Error:      make([]string, 0),
 			TermOutput: to[:len(to)-1],
@@ -117,7 +117,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 	default:
 		fmt.Println(string(body))
-		fmt.Fprint(w, TheTreeManager.PrintableTree())
+		fmt.Fprint(w, TheTreeManager.PrintableTree(""))
 	}
 }
 func (tm *TreeManager) Move(n *TreeNode) {
@@ -173,10 +173,10 @@ func (tm *TreeManager) AddRootNode(n *TreeNode) error {
 	return nil
 }
 
-func (tm *TreeManager) PrintableTree() string {
+func (tm *TreeManager) PrintableTree(prefix string) string {
 	tree := strings.Builder{}
 	for _, r := range tm.RootNodes {
-		fmt.Fprint(&tree, r.PrintableTree())
+		fmt.Fprint(&tree, r.PrintableTree(prefix))
 	}
 	return tree.String()
 }
@@ -284,10 +284,10 @@ const (
 	lastTree      = "     "
 )
 
-func (n *TreeNode) PrintableTree() string {
+func (n *TreeNode) PrintableTree(prefix string) string {
 	o := strings.Builder{}
 	fmt.Fprintf(&o, "%s\n", n.Text)
-	n.PrintableTreeInternal(&o, "")
+	n.PrintableTreeInternal(&o, prefix)
 	return o.String()
 }
 

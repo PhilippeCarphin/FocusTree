@@ -92,7 +92,7 @@ func TestPrintableTree(t *testing.T) {
       └─── X Text
            └─── Y Text
 `
-	result := r.PrintableTree()
+	result := r.PrintableTree("")
 	if result != expected {
 		t.Fatalf("Expected '%s'\nGot '%s'", expected, result)
 	}
