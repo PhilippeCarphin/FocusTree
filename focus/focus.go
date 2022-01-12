@@ -12,6 +12,7 @@ import (
 )
 
 var TheTreeManager *TreeManager = nil
+var TheFile string = "FocusTree.service.save_file.json"
 
 var TreeNodeIdCounter = 0
 
@@ -49,7 +50,7 @@ func NewTreeManager() *TreeManager {
 
 func FocusTreeServer() {
 	var err error
-	TheTreeManager, err = TreeManagerFromFile("FocusTree.service.save_file.json")
+	TheTreeManager, err = TreeManagerFromFile(TheFile)
 	if err != nil {
 		panic(err)
 	}
@@ -59,16 +60,19 @@ func FocusTreeServer() {
 	m.HandleFunc("/api/tree", TheTreeManager.handleRequest).Methods("GET")
 	m.HandleFunc("/api/send-command", TheTreeManager.handleCommand).Methods("POST")
 
-	l, err := net.Listen("tcp", "0.0.0.0:5052")
+	port := 5052
+	host := "0.0.0.0"
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		panic(err)
 	}
-	// p := l.Addr().(*net.TCPAddr).Port
+	fmt.Printf("Starting server on host %s, port %d\n", host, port)
 
 	http.Serve(l, m)
 }
 
 func (tm *TreeManager) handleRequest(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("handleRequest(): Sending tree in JSON form\n")
 	j, err := json.MarshalIndent(TheTreeManager, "    ", "    ")
 	if err != nil {
 		fmt.Printf("Error Could not marshal tree to JSON : %v", err)
@@ -83,27 +87,132 @@ type TerminalClientResponse struct {
 	Status     int      `json:"status"`
 }
 
+func (tm *TreeManager) FindIncompleteFromCurrent() (*TreeNode, error) {
+
+	c := tm.Current
+
+	for ; c != nil ; c = c.Parent {
+		fmt.Printf("handleRequest() Examining parent of current : %v\n", c)
+		u, err := c.FindIncompleteChild()
+		if err != nil {
+			panic(err)
+		}
+		if u != nil {
+			fmt.Printf("handleRequest() Setting current node to %v\n", u)
+			tm.Current = u
+			return u, nil
+		}
+	}
+
+	for _, r := range tm.RootNodes {
+		fmt.Printf("handleRequest() Examining root node : %v\n", r)
+		fmt.Println(r.Text)
+		u, err := r.FindIncompleteChild()
+		if err != nil {
+			panic(err)
+		}
+		if u != nil {
+			fmt.Printf("handleRequest() Setting current node to %v\n", u)
+			tm.Current = u
+			return u, nil
+		}
+	}
+
+	return nil, nil
+}
+
 func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Printf("Error getting body of request : %v", err)
 	}
 
+	words := strings.Split(string(body), " ")
+	command := words[0]
+	args := words[1:]
+	fmt.Printf("handleCommand(): Comand : %s, Args : %s\n", command, args)
+
+
 	var tr = TerminalClientResponse{
 		Status:     0,
 		Command: string(body),
 	}
-	words := strings.Split(string(body), " ")
-	command := words[0]
 	switch command {
 	case "current":
-		tr.TermOutput = TheTreeManager.Current.PrintableAncestors()
+		if tm.Current == nil {
+			tr.TermOutput = "No current task\n" + tm.PrintableTree("")
+		} else {
+			tr.TermOutput = tm.Current.PrintableAncestors()
+		}
 	case "tree":
-		tr.TermOutput = TheTreeManager.PrintableTree("")
+		tr.TermOutput = tm.PrintableTree("")
 	case "subtask":
+		t := NewTreeNode()
+		t.Text = strings.Join(args, " ")
+		if tm.Current == nil {
+			tm.AddRootNode(t)
+		} else {
+			tm.Current.AddChild(t)
+		}
+		tm.Current = t
+
+		tr.TermOutput = tm.Current.PrintableAncestors()
+	case "new-task", "new":
+		t := NewTreeNode()
+		t.Text = strings.Join(args, " ")
+
+		tm.AddRootNode(t)
+
+		tr.TermOutput = tm.PrintableTree("")
+	case "next-task", "next":
+		t := NewTreeNode()
+		t.Text = strings.Join(args, " ")
+
+		if tm.Current == nil || tm.Current.Parent == nil {
+			tm.AddRootNode(t)
+		} else {
+			tm.Current.Parent.AddChild(t)
+		}
+
+		tr.TermOutput = tm.PrintableTree("")
+	case "switch-task":
+		var id int
+		nbRead, err := fmt.Sscanf(args[0], "%d", &id)
+		if err != nil {
+			panic(err)
+		}
+		if nbRead == 0 {
+			panic("No bytes read")
+		}
+		n := tm.FindSubtaskById(id)
+		tm.Current = n
+		tm.CurrentTaskId = n.Id
+		fmt.Printf("Set current task by ID to %s\n", n)
+	case "done":
+		if tm.Current == nil {
+			tr.TermOutput = "No current task"
+			tr.Status = 1
+			tr.Error = "No current task to mark done"
+			break
+		}
+
+		tm.Current.Info.Done = true
+		tm.Current.Info.ClosingNotes = strings.Join(args, " ")
+
+		tm.Current, err = tm.FindIncompleteFromCurrent()
+		if err != nil {
+			panic(err)
+		}
+		if tm.Current == nil {
+			tr.TermOutput = "No current task"
+		} else {
+			tr.TermOutput = tm.Current.PrintableAncestors()
+		}
+
 	default:
 		tr.TermOutput = ""
-		tr.Error = fmt.Sprintf("Unknown command %s", string(body))
+		tr.Error = fmt.Sprintf("(goftserver) Unknown command %s", string(body))
 		tr.Status = 1
 		fmt.Println(string(body))
 	}
@@ -112,8 +221,29 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	tm.ToFile(TheFile)
 	w.Write(j)
 }
+
+func (t *TreeNode) FindIncompleteChild() (*TreeNode, error) {
+
+	for _, c := range t.Children {
+		u, err := c.FindIncompleteChild()
+		if err != nil {
+			return nil, err
+		}
+		if u != nil {
+			return u, nil
+		}
+	}
+
+	if ! t.Info.Done {
+		return t, nil
+	}
+
+	return nil, nil
+}
+
 func (tm *TreeManager) Move(n *TreeNode) {
 	tm.moveStack = append(tm.moveStack, tm.Current)
 	tm.Current = n
@@ -123,7 +253,7 @@ func (tm *TreeManager) ToFile(filename string) error {
 	if tm.Current != nil {
 		tm.CurrentTaskId = tm.Current.Id
 	}
-	b, err := json.Marshal(tm)
+	b, err := json.MarshalIndent(tm, "\t", "	")
 	if err != nil {
 		return err
 	}
@@ -147,6 +277,11 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 
 
 	tm.Current = tm.FindSubtaskById(tm.CurrentTaskId)
+	if tm.Current == nil {
+		fmt.Printf("Could not set current node according to current_task_id %d\n", tm.CurrentTaskId)
+	} else {
+		fmt.Printf("Current task is %v\n", tm.Current)
+	}
 
 	// Reassigning IDs is how I'm making the global TreeNodeIdCounter
 	// go up after having read the file.  Since json.Unmarshal does
@@ -238,9 +373,27 @@ func (tm *TreeManager) AddRootNode(n *TreeNode) error {
 func (tm *TreeManager) PrintableTree(prefix string) string {
 	tree := strings.Builder{}
 	for _, r := range tm.RootNodes {
-		fmt.Fprint(&tree, r.PrintableTree(prefix))
+		color := "\033[31m"
+		if r.IsDone() {
+			color = "\033[32m"
+		}
+		fmt.Fprintf(&tree, "%s\u2b95\033[0m %s",color, r.PrintableTree("   " + prefix))
 	}
 	return tree.String()
+}
+
+func (n *TreeNode) IsDone() bool {
+	if n.Info.Done == false {
+		return false
+	}
+
+	for _, c := range n.Children {
+		if ! c.IsDone() {
+			return false
+		}
+	}
+
+	return true
 }
 
 func NewTreeNode() *TreeNode {
@@ -282,14 +435,14 @@ func NodeFromJSON(b []byte) (*TreeNode, error) {
 	return &newNode, nil
 }
 
-func (n *TreeNode) IsDone() bool {
-	for _, c := range n.Children {
-		if !c.IsDone() {
-			return false
-		}
-	}
-	return n.Info.Done
-}
+// func (n *TreeNode) IsDone() bool {
+// 	for _, c := range n.Children {
+// 		if !c.IsDone() {
+// 			return false
+// 		}
+// 	}
+// 	return n.Info.Done
+// }
 
 func (n *TreeNode) FindSubtaskById(id int) *TreeNode {
 
@@ -319,13 +472,21 @@ func (n *TreeNode) Ancestors() []*TreeNode {
 	return ancestors
 }
 
+func (n *TreeNode) String() string {
+	color := "\033[94m"
+	if n.Info.Done {
+		color = "\033[32m"
+	}
+	return fmt.Sprintf("\033[90m[%d]\033[0m %s\u2b23 \033[0m %s", n.Id, color, n.Text)
+}
+
 func (n *TreeNode) PrintableAncestors() string {
 	ans := n.Ancestors()
 	b := strings.Builder{}
-	p := strings.Builder{}
+	prefix := strings.Builder{}
 	for i := len(ans) - 1; 0 <= i; i-- {
-		fmt.Fprintf(&b, "%s%s%s\n", p.String(), lastChild, ans[i].Text)
-		fmt.Fprint(&p, "    ")
+		fmt.Fprintf(&b, "%s%s%s\n", prefix.String(), lastChild, ans[i])
+		fmt.Fprint(&prefix, "    ")
 	}
 
 	return b.String()
@@ -348,7 +509,7 @@ const (
 
 func (n *TreeNode) PrintableTree(prefix string) string {
 	o := strings.Builder{}
-	fmt.Fprintf(&o, "%s\n", n.Text)
+	fmt.Fprintf(&o, "%s\n", n)
 	n.PrintableTreeInternal(&o, prefix)
 	return o.String()
 }
@@ -364,7 +525,7 @@ func (n *TreeNode) PrintableTreeInternal(o io.Writer, prefix string) {
 			thisPrefix = prefix + interChild
 		}
 
-		fmt.Fprintf(o, "%s %s\n", thisPrefix, c.Text)
+		fmt.Fprintf(o, "%s %s\n", thisPrefix, c)
 
 		var nextPrefix string
 		if !last {

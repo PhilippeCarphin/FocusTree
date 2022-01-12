@@ -7,3 +7,5 @@ dist
 __pycache__
 nohup.out
 localinstall
+main
+main.exe
