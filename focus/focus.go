@@ -12,7 +12,12 @@ import (
 )
 
 var TheTreeManager *TreeManager = nil
-var TheFile string = "FocusTree.service.save_file.json"
+// These should be found from a searcho or configuration files
+// finding .focustree.json works like git, then the save file will
+// be put where the config file was found.
+var TheFile string = "/home/phc001/.focustree.save.5051.json"
+var ThePort int    = 5051
+var TheHost string = "0.0.0.0"
 
 var TreeNodeIdCounter = 0
 
@@ -60,13 +65,11 @@ func FocusTreeServer() {
 	m.HandleFunc("/api/tree", TheTreeManager.handleRequest).Methods("GET")
 	m.HandleFunc("/api/send-command", TheTreeManager.handleCommand).Methods("POST")
 
-	port := 5052
-	host := "0.0.0.0"
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", TheHost, ThePort))
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Starting server on host %s, port %d\n", host, port)
+	fmt.Printf("Starting server on host %s, port %d\n", TheHost, ThePort)
 
 	http.Serve(l, m)
 }
