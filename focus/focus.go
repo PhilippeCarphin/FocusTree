@@ -303,7 +303,11 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 	// the maximum of the Ids and set the counter one above that.
 
 	tm.ReassignIds()
-	tm.CurrentTaskId = tm.Current.Id
+	if tm.Current != nil {
+		tm.CurrentTaskId = tm.Current.Id
+	} else {
+		tm.CurrentTaskId = -77
+	}
 
 	return &tm, nil
 }
