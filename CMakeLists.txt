@@ -15,7 +15,16 @@ orgmanpages_add_man_target()
 include(CTest)
 add_custom_target(check COMMAND CTEST_OUTPUT_ON_FAILURE=true ${CMAKE_CTEST_COMMAND})
 
+
+add_custom_command(
+    OUTPUT go-ftserver
+    COMMAND go build ${CMAKE_SOURCE_DIR}/goftserver/main.go && mv main ${CMAKE_BINARY_DIR}/go-ftserver
+    DEPENDS ${CMAKE_SOURCE_DIR}/focus/focus.go;${CMAKE_SOURCE_DIR}/goftserver/main.go
+)
+add_custom_target(goftserver ALL DEPENDS go-ftserver)
+
 install(DIRECTORY bin/ DESTINATION bin USE_SOURCE_PERMISSIONS)
+install(FILES ${CMAKE_BINARY_DIR}/go-ftserver DESTINATION bin)
 install(
     DIRECTORY libexec/
     DESTINATION libexec
