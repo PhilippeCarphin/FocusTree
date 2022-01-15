@@ -40,7 +40,6 @@ type TreeNodeInfo struct {
 
 type TreeManager struct {
 	RootNodes     []*TreeNode `json:"root_nodes"`
-	CurrentTask   string      `json:"current_task"`
 	Current       *TreeNode   `json:"-"`
 	CurrentTaskId int         `json:"current_task_id"`
 	moveStack     []*TreeNode `json:"-"`
