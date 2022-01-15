@@ -123,6 +123,13 @@ func (tm *TreeManager) FindIncompleteFromCurrent() (*TreeNode, error) {
 	return nil, nil
 }
 
+func (tm *TreeManager) Reset() error {
+	tm.RootNodes = make([]*TreeNode, 0)
+	tm.Current = nil
+	tm.CurrentTaskId = 0
+	return nil
+}
+
 func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
@@ -141,6 +148,10 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		Command: string(body),
 	}
 	switch command {
+	case "reset":
+		tm.Reset()
+		tr.TermOutput = "No current task\n" + tm.PrintableTree("")
+
 	case "current":
 		if tm.Current == nil {
 			tr.TermOutput = "No current task\n" + tm.PrintableTree("")
