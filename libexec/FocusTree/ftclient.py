@@ -19,6 +19,8 @@ from prompt_toolkit.shortcuts import CompleteStyle
 
 from program_options import get_args
 
+TOKEN = None
+
 the_tree = None
 
 class REPLDoneError(Exception):
@@ -30,8 +32,11 @@ def read_command(prompt):
     except EOFError as e:
         raise REPLDoneError("EOF entered")
 
-def eval_command(command_line):
-    payload = command_line if command_line != '' else 'current'
+def eval_command(command_line='current'):
+    payload = {
+            "command" : command_line if command_line != '' else 'current',
+            "token" : TOKEN,
+    }
     words = command_line.split()
     operation = words[0]
     client_commands = ['save-org', 'clear', 'save-file', 'send-file']
@@ -53,7 +58,7 @@ def eval_command(command_line):
             resp = requests.post(request_url, data=payload).json()
     else:
         request_url = f'http://{args.host}:{args.port}/api/send-command'
-        resp = requests.post(request_url, data=bytes(payload, 'utf-8')).json()
+        resp = requests.post(request_url, data=bytes(json.dumps(payload), 'utf-8')).json()
     return resp
 
 def print_output(resp):
@@ -204,6 +209,11 @@ if __name__ == "__main__":
 
     print("FocusTree client using http://{}:{}"
               .format(args.host, args.port))
+
+    home = os.environ['HOME']
+    with open(os.path.expanduser('~/.ssh/id_rsa.pub')) as f:
+        TOKEN = f.read().strip().split()[1] # Just the actual key
+    print(TOKEN)
 
     try:
         # There is already a server running

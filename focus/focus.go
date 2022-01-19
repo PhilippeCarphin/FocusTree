@@ -12,12 +12,15 @@ import (
 )
 
 var TheTreeManager *TreeManager = nil
+
 // These should be found from a searcho or configuration files
 // finding .focustree.json works like git, then the save file will
 // be put where the config file was found.
 var TheFile string = "/home/phc001/.focustree.save.5051.json"
+// var TheFile string = "FocusTree.service.save_file.json"
 var ThePort int    = 5051
 var TheHost string = "0.0.0.0"
+var TheToken string
 
 var TreeNodeIdCounter = 0
 
@@ -58,6 +61,18 @@ func FocusTreeServer() {
 	if err != nil {
 		panic(err)
 	}
+
+	userDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	content, err := os.ReadFile(fmt.Sprintf("%s/.ssh/id_rsa.pub", userDir))
+	if err != nil {
+		panic(err)
+	}
+	words := strings.Split(string(content), " ")
+	TheToken = words[1]
 
 	m := mux.NewRouter()
 	m.HandleFunc("/", TheTreeManager.handleRequest).Methods("GET")
@@ -129,6 +144,10 @@ func (tm *TreeManager) Reset() error {
 	tm.CurrentTaskId = 0
 	return nil
 }
+type FtclientPayload struct {
+	Command string
+	Token string
+}
 
 func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 
@@ -137,7 +156,31 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Error getting body of request : %v", err)
 	}
 
-	words := strings.Split(string(body), " ")
+	var payload FtclientPayload
+	json.Unmarshal(body, &payload)
+
+	if payload.Token != TheToken {
+		fmt.Println("Unauthorized access attempted")
+
+		var tr = TerminalClientResponse{
+			Status:     1,
+			Command: string(body),
+			Error: "Access denied your token does not match server token",
+		}
+
+		j, err := json.Marshal(tr)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		w.Write(j)
+
+		return
+	} else {
+		fmt.Println("Token authorization successful, proceeding with request")
+	}
+
+	words := strings.Split(payload.Command, " ")
 	command := words[0]
 	args := words[1:]
 	fmt.Printf("handleCommand(): Comand : %s, Args : %s\n", command, args)
