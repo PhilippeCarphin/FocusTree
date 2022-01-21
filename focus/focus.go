@@ -16,11 +16,11 @@ var TheTreeManager *TreeManager = nil
 // These should be found from a searcho or configuration files
 // finding .focustree.json works like git, then the save file will
 // be put where the config file was found.
-var TheFile string = "/home/phc001/.focustree.save.5051.json"
-// var TheFile string = "FocusTree.service.save_file.json"
+// var TheFile string = "/home/phc001/.focustree.save.5051.json"
+var TheFile string = "/home/pi/FocusTree.service.save_file.json"
 var ThePort int    = 5051
 var TheHost string = "0.0.0.0"
-var TheToken string
+var TheToken string = "1234"
 
 var TreeNodeIdCounter = 0
 
@@ -62,17 +62,17 @@ func FocusTreeServer() {
 		panic(err)
 	}
 
-	userDir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
+	// userDir, err := os.UserHomeDir()
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	content, err := os.ReadFile(fmt.Sprintf("%s/.ssh/id_rsa.pub", userDir))
-	if err != nil {
-		panic(err)
-	}
-	words := strings.Split(string(content), " ")
-	TheToken = words[1]
+	// content, err := os.ReadFile(fmt.Sprintf("%s/.ssh/id_rsa.pub", userDir))
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// words := strings.Split(string(content), " ")
+	// TheToken = words[1]
 
 	m := mux.NewRouter()
 	m.HandleFunc("/", TheTreeManager.handleRequest).Methods("GET")

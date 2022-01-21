@@ -1,96 +1,95 @@
 {
-    "current_task": "Check out what Vincent wrote me in Slack",
-    "current_task_id": 7,
-    "root_nodes": [
-        {
-            "children": [
-                {
-                    "children": [
-                        {
-                            "children": [],
-                            "id": 11,
-                            "info": {
-                                "closing_notes": "",
-                                "created": "(2021-12-21 10:38:32)",
-                                "done": true,
-                                "finished": "(2021-12-21 11:41:42)"
-                            },
-                            "text": "finish arranging ci-admin-bundle"
-                        }
-                    ],
-                    "id": 7,
-                    "info": {
-                        "closing_notes": null,
-                        "created": "(2021-12-16 11:33:52)",
-                        "done": false,
-                        "finished": null
-                    },
-                    "text": "Check out what Vincent wrote me in Slack"
-                },
-                {
-                    "children": [],
-                    "id": 8,
-                    "info": {
-                        "closing_notes": null,
-                        "created": "(2021-12-16 11:36:17)",
-                        "done": false,
-                        "finished": null
-                    },
-                    "text": "Create a program that mimicks his test"
-                },
-                {
-                    "children": [],
-                    "id": 9,
-                    "info": {
-                        "closing_notes": null,
-                        "created": "(2021-12-16 11:36:56)",
-                        "done": false,
-                        "finished": null
-                    },
-                    "text": "Send JP information about Oasis in the form of places to look in files (nice org document)"
-                }
-            ],
-            "id": 6,
-            "info": {
-                "closing_notes": null,
-                "created": "(2021-12-16 11:33:13)",
-                "done": false,
-                "finished": null
-            },
-            "text": "Advance Coupling project"
-        },
-        {
-            "children": [],
-            "id": 10,
-            "info": {
-                "closing_notes": null,
-                "created": "(2021-12-21 10:33:43)",
-                "done": false,
-                "finished": null
-            },
-            "text": "make checks for Alexandre"
-        },
-        {
-            "children": [],
-            "id": 12,
-            "info": {
-                "closing_notes": null,
-                "created": "(2021-12-21 11:47:21)",
-                "done": false,
-                "finished": null
-            },
-            "text": "push changed ci-admin-bundle to sici000"
-        },
-        {
-            "children": [],
-            "id": 13,
-            "info": {
-                "closing_notes": null,
-                "created": "(2021-12-21 11:47:41)",
-                "done": false,
-                "finished": null
-            },
-            "text": "write to pneus touchette"
-        }
-    ]
-}
+		"root_nodes": [
+			{
+				"text": "Advance Coupling project",
+				"id": 0,
+				"info": {
+					"done": false,
+					"created": "(2021-12-16 11:33:13)",
+					"closing_notes": "",
+					"finished": ""
+				},
+				"children": [
+					{
+						"text": "Check out what Vincent wrote me in Slack",
+						"id": 1,
+						"info": {
+							"done": false,
+							"created": "(2021-12-16 11:33:52)",
+							"closing_notes": "",
+							"finished": ""
+						},
+						"children": [
+							{
+								"text": "finish arranging ci-admin-bundle",
+								"id": 2,
+								"info": {
+									"done": true,
+									"created": "(2021-12-21 10:38:32)",
+									"closing_notes": "",
+									"finished": "(2021-12-21 11:41:42)"
+								},
+								"children": []
+							}
+						]
+					},
+					{
+						"text": "Create a program that mimicks his test",
+						"id": 3,
+						"info": {
+							"done": false,
+							"created": "(2021-12-16 11:36:17)",
+							"closing_notes": "",
+							"finished": ""
+						},
+						"children": []
+					},
+					{
+						"text": "Send JP information about Oasis in the form of places to look in files (nice org document)",
+						"id": 4,
+						"info": {
+							"done": false,
+							"created": "(2021-12-16 11:36:56)",
+							"closing_notes": "",
+							"finished": ""
+						},
+						"children": []
+					}
+				]
+			},
+			{
+				"text": "make checks for Alexandre",
+				"id": 5,
+				"info": {
+					"done": false,
+					"created": "(2021-12-21 10:33:43)",
+					"closing_notes": "",
+					"finished": ""
+				},
+				"children": []
+			},
+			{
+				"text": "push changed ci-admin-bundle to sici000",
+				"id": 6,
+				"info": {
+					"done": false,
+					"created": "(2021-12-21 11:47:21)",
+					"closing_notes": "",
+					"finished": ""
+				},
+				"children": []
+			},
+			{
+				"text": "write to pneus touchette",
+				"id": 7,
+				"info": {
+					"done": false,
+					"created": "(2021-12-21 11:47:41)",
+					"closing_notes": "",
+					"finished": ""
+				},
+				"children": []
+			}
+		],
+		"current_task_id": 1
+	}

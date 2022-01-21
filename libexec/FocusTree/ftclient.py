@@ -211,8 +211,8 @@ if __name__ == "__main__":
               .format(args.host, args.port))
 
     home = os.environ['HOME']
-    with open(os.path.expanduser('~/.ssh/id_rsa.pub')) as f:
-        TOKEN = f.read().strip().split()[1] # Just the actual key
+    with open(os.path.expanduser('~/.ssh/ftserver_token')) as f:
+        TOKEN = f.read().strip() # Just the actual key
     print(TOKEN)
 
     try:
