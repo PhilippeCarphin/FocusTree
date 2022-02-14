@@ -237,7 +237,8 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		} else {
 			tr.TermOutput = tm.Current.PrintableAncestors()
 		}
-
+	case "reassign-ids":
+		tm.ReassignIds()
 	default:
 		tr.TermOutput = ""
 		tr.Error = fmt.Sprintf("(goftserver) Unknown command %s", string(body))
