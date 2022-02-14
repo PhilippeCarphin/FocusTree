@@ -202,6 +202,21 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		tm.Current = n
 		tm.CurrentTaskId = n.Id
 		fmt.Printf("Set current task by ID to %s\n", n)
+	case "subtask-by-id":
+		var id int
+		nbRead, err := fmt.Sscanf(args[0], "%d", &id)
+		if err != nil {
+			panic(err)
+		}
+		if nbRead == 0 {
+			panic("No bytes read")
+		}
+		n := tm.FindSubtaskById(id)
+
+		t := NewTreeNode()
+		t.Text = strings.Join(args[1:], " ")
+		n.AddChild(t)
+		tr.TermOutput = tm.PrintableTree("")
 	case "done":
 		if tm.Current == nil {
 			tr.TermOutput = "No current task"
