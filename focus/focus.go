@@ -301,7 +301,7 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 	}
 
 	for _, r := range tm.RootNodes {
-		setParents(r)
+		tm.setParents(r)
 	}
 
 
@@ -383,10 +383,11 @@ func (n *TreeNode) maxId() int {
 	return max
 }
 
-func setParents(tree *TreeNode) {
+func (tm *TreeManager) setParents(tree *TreeNode) {
+	tree.Manager = tm
 	for _, c := range tree.Children {
 		c.Parent = tree
-		setParents(c)
+		tm.setParents(c)
 	}
 }
 
