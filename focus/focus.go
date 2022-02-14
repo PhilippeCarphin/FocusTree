@@ -508,8 +508,19 @@ func (n *TreeNode) Ancestors() []*TreeNode {
 
 func (n *TreeNode) String() string {
 	color := "\033[94m"
+	manager := n.Manager
 	if n.Info.Done {
-		color = "\033[32m"
+		if manager != nil && n == n.Manager.Current {
+			color = "\033[35m"
+		} else {
+			color = "\033[32m"
+		}
+	} else {
+		if manager != nil && n == n.Manager.Current {
+			color = "\033[35m"
+		} else {
+			color = "\033[34m"
+		}
 	}
 	return fmt.Sprintf("\033[90m[%d]\033[0m %s\u2b23 \033[0m %s", n.Id, color, n.Text)
 }
