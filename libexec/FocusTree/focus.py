@@ -294,7 +294,9 @@ class TreeManager:
     def from_dict(d):
         """Create a TreeManager from a dictionary"""
         tm = TreeManager()
-        tm.root_nodes = [TreeNode.from_dict(rn) for rn in d["root_nodes"]]
+        # TODO Clean this up so I don't have a milion checks
+        if d and 'root_nodes' in d and d['root_nodes']:
+            tm.root_nodes = [TreeNode.from_dict(rn) for rn in d["root_nodes"]]
         tm.current_task = tm.find_task_by_id(d["current_task_id"])
         return tm
 
