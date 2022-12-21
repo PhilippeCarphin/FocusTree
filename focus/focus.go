@@ -1,6 +1,7 @@
 package focus
 
 import (
+	"path"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -54,12 +55,46 @@ func NewTreeManager() *TreeManager {
 	}
 }
 
-func FocusTreeServer() {
-	var err error
-	TheTreeManager, err = TreeManagerFromFile(TheFile)
+func FindFocusTree(port int) (*TreeManager, error) {
+	d, err := os.Getwd()
+	base := fmt.Sprintf(".focustree.save.%d.json", port)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("Could not get cwd: %v", err);
 	}
+	for; ; d = path.Dir(d) {
+		file := path.Join(d, base)
+		t, err := TreeManagerFromFile(file)
+		if  err == nil {
+			fmt.Printf("Using tree file '%s' found from directory search\n", file)
+			return t, nil
+		}
+
+		if d == "" || d == "/" {
+			// return nil, fmt.Errorf("Reached filesystem root without finding tree file")
+			break
+		}
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("Could not get user home: %v", err)
+	}
+	file := path.Join(home, base)
+	fmt.Printf("Using file from '%s' from home directory\n", file)
+	return TreeManagerFromFile(file)
+}
+
+func FocusTreeServer() {
+	t, err := FindFocusTree(ThePort)
+	if err != nil {
+		fmt.Printf("Could not find focus tree file : %v\n", err)
+	}
+	TheTreeManager = t
+	// var err error
+	// TheTreeManager, err = TreeManagerFromFile(TheFile)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	// userDir, err := os.UserHomeDir()
 	// if err != nil {
