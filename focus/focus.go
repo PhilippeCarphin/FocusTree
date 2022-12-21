@@ -84,22 +84,38 @@ func FindFocusTree(port int) (*TreeManager, error) {
 	return TreeManagerFromFile(file)
 }
 
-func FocusTreeServer() {
-	t, err := FindFocusTree(ThePort)
-	if err != nil {
-		fmt.Printf("Could not find focus tree file : %v\n", err)
+func FocusTreeServer(port int, host string, file string) {
+	if file == "" {
+		t, err := FindFocusTree(port)
+		if err != nil {
+			fmt.Printf("Could not find focus tree file : %v\n", err)
+		}
+		TheTreeManager = t
+	} else {
+		t, err := TreeManagerFromFile(TheFile)
+		if err != nil {
+			fmt.Printf("Could not get Focus Tree from file '%s': %v\n", file, err)
+		}
+		TheTreeManager = t
 	}
-	TheTreeManager = t
-	// var err error
-	// TheTreeManager, err = TreeManagerFromFile(TheFile)
-	// if err != nil {
-	// 	panic(err)
-	// }
 
-	// userDir, err := os.UserHomeDir()
-	// if err != nil {
-	// 	panic(err)
-	// }
+	if TheTreeManager == nil {
+		fmt.Printf("Could not create Tree\n")
+		return
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	tokenFile := path.Join(home, ".ssh", "fterver_token")
+	content, err := os.ReadFile(tokenFile)
+	if err != nil {
+		fmt.Printf("Could not get auth token from file '%s': %v\n", tokenFile, err)
+	}
+	// TheToken = string(content)
+	TheToken = strings.Trim(string(content), " \n")
+	fmt.Printf("The token is '%s'\n", TheToken)
 
 	// content, err := os.ReadFile(fmt.Sprintf("%s/.ssh/id_rsa.pub", userDir))
 	// if err != nil {
@@ -113,11 +129,11 @@ func FocusTreeServer() {
 	m.HandleFunc("/api/tree", TheTreeManager.handleRequest).Methods("GET")
 	m.HandleFunc("/api/send-command", TheTreeManager.handleCommand).Methods("POST")
 
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", TheHost, ThePort))
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Starting server on host %s, port %d\n", TheHost, ThePort)
+	fmt.Printf("Starting server on host %s, port %d\n", host, port)
 
 	http.Serve(l, m)
 }
