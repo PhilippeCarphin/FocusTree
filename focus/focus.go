@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"strconv"
 )
 
 var TheTreeManager *TreeManager = nil
@@ -183,7 +184,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	words := strings.Split(payload.Command, " ")
 	command := words[0]
 	args := words[1:]
-	fmt.Printf("handleCommand(): Comand : %s, Args : %s\n", command, args)
+	fmt.Printf("handleCommand(): Comand : %s, Args : %s (len(args): %d)\n", command, args, len(args))
 
 
 	var tr = TerminalClientResponse{
@@ -233,15 +234,26 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 		tr.TermOutput = tm.PrintableTree("")
 	case "switch-task":
-		var id int
-		nbRead, err := fmt.Sscanf(args[0], "%d", &id)
+		if len(args) == 0 || args[0] == "" {
+			tr.Status = 1
+			tr.Error = "Command requires ID as argument"
+			break
+		}
+
+		id64, err := strconv.ParseInt(args[0], 0, 0)
 		if err != nil {
-			panic(err)
+			tr.Status = 1
+			tr.Error = fmt.Sprintf("Could not parse numeric ID from '%s': %v", args[0], err)
+			break
 		}
-		if nbRead == 0 {
-			panic("No bytes read")
-		}
+		id := int(id64)
+
 		n := tm.FindSubtaskById(id)
+		if n == nil {
+			tr.Status = 1
+			tr.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
+			break
+		}
 		tm.Current = n
 		tm.CurrentTaskId = n.Id
 		fmt.Printf("Set current task by ID to %s\n", n)
