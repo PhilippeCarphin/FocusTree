@@ -24,7 +24,7 @@ add_custom_command(
 add_custom_target(goftserver ALL DEPENDS go-ftserver)
 
 install(DIRECTORY bin/ DESTINATION bin USE_SOURCE_PERMISSIONS)
-install(FILES ${CMAKE_BINARY_DIR}/go-ftserver DESTINATION bin)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/go-ftserver DESTINATION bin)
 install(
     DIRECTORY libexec/
     DESTINATION libexec
