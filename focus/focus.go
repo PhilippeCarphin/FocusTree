@@ -14,11 +14,9 @@ import (
 
 var TheTreeManager *TreeManager = nil
 
-// These should be found from a searcho or configuration files
-// finding .focustree.json works like git, then the save file will
-// be put where the config file was found.
-// var TheFile string = "/home/phc001/.focustree.save.5051.json"
-var TheFile string = "/Users/pcarphin/FocusTree.service.save_file.json"
+// These should all be fields of tree manager.  It would make
+// a lot more sense.
+var TheFile string
 var ThePort int    = 5051
 var TheHost string = "0.0.0.0"
 var TheToken string = "1234"
@@ -726,6 +724,15 @@ func newTestTree() *TreeNode {
 	return r
 }
 
+func init(){
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(fmt.Sprintf("Could not get user home dir: %v", err))
+	}
+	TheFile = fmt.Sprintf("%s/.focustree.save.%d.json", home, ThePort)
+	fmt.Printf("Using file %s\n", TheFile)
+}
 //     """Basic noce of the focus tree.
 //
 //     The node has some info about itself and a 'children' attribute."""
