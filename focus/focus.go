@@ -17,7 +17,7 @@ var TheTreeManager *TreeManager = nil
 // finding .focustree.json works like git, then the save file will
 // be put where the config file was found.
 // var TheFile string = "/home/phc001/.focustree.save.5051.json"
-var TheFile string = "/home/pi/FocusTree.service.save_file.json"
+var TheFile string = "/Users/pcarphin/FocusTree.service.save_file.json"
 var ThePort int    = 5051
 var TheHost string = "0.0.0.0"
 var TheToken string = "1234"
