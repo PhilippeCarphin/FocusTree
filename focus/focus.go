@@ -17,7 +17,6 @@ var TheTreeManager *TreeManager = nil
 
 // These should all be fields of tree manager.  It would make
 // a lot more sense.
-var TheFile string
 var ThePort int    = 5051
 var TheHost string = "0.0.0.0"
 var TheToken string = "1234"
@@ -42,6 +41,7 @@ type TreeNodeInfo struct {
 }
 
 type TreeManager struct {
+	File          string      `json:"-"`
 	RootNodes     []*TreeNode `json:"root_nodes"`
 	Current       *TreeNode   `json:"-"`
 	CurrentTaskId int         `json:"current_task_id"`
@@ -92,7 +92,7 @@ func FocusTreeServer(port int, host string, file string) {
 		}
 		TheTreeManager = t
 	} else {
-		t, err := TreeManagerFromFile(TheFile)
+		t, err := TreeManagerFromFile(file)
 		if err != nil {
 			fmt.Printf("Could not get Focus Tree from file '%s': %v\n", file, err)
 		}
@@ -104,14 +104,17 @@ func FocusTreeServer(port int, host string, file string) {
 		return
 	}
 
+	fmt.Printf("Using '%s' as Tree file\n", TheTreeManager.File)
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
-	tokenFile := path.Join(home, ".ssh", "fterver_token")
+	tokenFile := path.Join(home, ".ssh", "ftserver_token")
 	content, err := os.ReadFile(tokenFile)
 	if err != nil {
 		fmt.Printf("Could not get auth token from file '%s': %v\n", tokenFile, err)
+		return
 	}
 	// TheToken = string(content)
 	TheToken = strings.Trim(string(content), " \n")
@@ -354,7 +357,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	tm.ToFile(TheFile)
+	tm.ToFile()
 	w.Write(j)
 }
 
@@ -382,7 +385,7 @@ func (tm *TreeManager) Move(n *TreeNode) {
 	tm.Current = n
 }
 
-func (tm *TreeManager) ToFile(filename string) error {
+func (tm *TreeManager) ToFile() error {
 	if tm.Current != nil {
 		tm.CurrentTaskId = tm.Current.Id
 	}
@@ -390,7 +393,7 @@ func (tm *TreeManager) ToFile(filename string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filename, b, 0644)
+	return os.WriteFile(tm.File, b, 0644)
 }
 
 func TreeManagerFromFile(filename string) (*TreeManager, error) {
@@ -439,6 +442,8 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 	} else {
 		tm.CurrentTaskId = -77
 	}
+
+	tm.File = filename
 
 	return &tm, nil
 }
@@ -775,15 +780,6 @@ func newTestTree() *TreeNode {
 	return r
 }
 
-func init(){
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		panic(fmt.Sprintf("Could not get user home dir: %v", err))
-	}
-	TheFile = fmt.Sprintf("%s/.focustree.save.%d.json", home, ThePort)
-	fmt.Printf("Using file %s\n", TheFile)
-}
 //     """Basic noce of the focus tree.
 //
 //     The node has some info about itself and a 'children' attribute."""
