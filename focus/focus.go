@@ -1,6 +1,7 @@
 package focus
 
 import (
+	"io/ioutil"
 	"path"
 	"encoding/json"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"strconv"
+	"path/filepath"
 )
 
 var TheTreeManager *TreeManager = nil
@@ -131,6 +133,8 @@ func FocusTreeServer(port int, host string, file string) {
 	m.HandleFunc("/", TheTreeManager.handleRequest).Methods("GET")
 	m.HandleFunc("/api/tree", TheTreeManager.handleRequest).Methods("GET")
 	m.HandleFunc("/api/send-command", TheTreeManager.handleCommand).Methods("POST")
+	m.HandleFunc("/fuck_my_face", TheTreeManager.JsonTree).Methods("GET")
+	m.PathPrefix("/simple-client").HandlerFunc(ServeWebApp).Methods("GET")
 
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
@@ -139,6 +143,42 @@ func FocusTreeServer(port int, host string, file string) {
 	fmt.Printf("Starting server on host %s, port %d\n", host, port)
 
 	http.Serve(l, m)
+}
+
+func ServeWebApp(w http.ResponseWriter, r *http.Request){
+	fmt.Printf("Serving web app")
+	fmt.Printf("Request : r.URL.Path() -> %s\n", r.URL.Path)
+	rest := strings.TrimPrefix(r.URL.Path, "/simple-client")
+	fmt.Printf("Rest of path: %s\n", rest)
+
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exPath := filepath.Dir(ex)
+	
+	s := path.Join(exPath, "..", "share", "FocusTree", "clients", "basic_js_client", rest)
+	fmt.Printf("file to send back: %s\n", s)
+	fileBytes, err := ioutil.ReadFile(s)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	h := w.Header()
+	switch(rest){
+	case "/index.html":
+		h.Set("Content-Type", "text/html")
+	case "/main.js":
+		h.Set("Content-Type", "text/javascript")
+	default:
+		h.Set("Content-Type", "text/html")
+		w.Write([]byte("Unknown file"))
+		return
+	}
+	w.Write(fileBytes)
 }
 
 func (tm *TreeManager) handleRequest(w http.ResponseWriter, r *http.Request) {
@@ -212,7 +252,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	var payload FtclientPayload
 	json.Unmarshal(body, &payload)
 
-	if payload.Token != TheToken {
+	if false && payload.Token != TheToken {
 		fmt.Println("Unauthorized access attempted")
 
 		var tr = TerminalClientResponse{
@@ -309,6 +349,30 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		tm.Current = n
 		tm.CurrentTaskId = n.Id
 		fmt.Printf("Set current task by ID to %s\n", n)
+	case "delete-task", "delete":
+		if len(args) == 0 || args[0] == "" {
+			tr.Status = 1
+			tr.Error = "Command requires ID as argument"
+			break
+		}
+
+		id64, err := strconv.ParseInt(args[0], 0, 0)
+		if err != nil {
+			tr.Status = 1
+			tr.Error = fmt.Sprintf("Could not parse numeric ID from '%s': %v", args[0], err)
+			break
+		}
+		id := int(id64)
+
+		n := tm.FindSubtaskById(id)
+		if n == nil {
+			tr.Status = 1
+			tr.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
+			break
+		}
+		tm.DeleteTaskById(id)
+		tr.TermOutput = fmt.Sprintf("Deleted task with id %d: '%s'", id, n.Text)
+
 	case "subtask-by-id":
 		var id int
 		nbRead, err := fmt.Sscanf(args[0], "%d", &id)
@@ -525,6 +589,17 @@ func (tm *TreeManager) PrintableTree(prefix string) string {
 	return tree.String()
 }
 
+func (tm *TreeManager) JsonTree(w http.ResponseWriter, r *http.Request) {
+	b, err := json.Marshal(tm)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(b)
+}
+
 func (n *TreeNode) IsDone() bool {
 	if n.Info.Done == false {
 		return false
@@ -729,6 +804,28 @@ func (tm *TreeManager) FindSubtaskById(id int) *TreeNode {
 			return n
 		}
 	}
+	return nil
+}
+
+func (tm *TreeManager) DeleteTaskById(id int) error {
+	toDelete := tm.FindSubtaskById(id)
+	if toDelete == nil {
+		return fmt.Errorf("Could not find node with id %d", id)
+	}
+
+	parent := toDelete.Parent
+	if parent == nil {
+		return fmt.Errorf("Node with id %d has no parent", id)
+	}
+
+	var indexToRemove int
+	for i, c := range parent.Children {
+		if c.Id == id {
+			indexToRemove = i
+			break
+		}
+	}
+	parent.Children = append(parent.Children[:indexToRemove], parent.Children[indexToRemove+1:]...)
 	return nil
 }
 

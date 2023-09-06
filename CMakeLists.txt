@@ -23,6 +23,7 @@ add_custom_command(
 )
 add_custom_target(goftserver ALL DEPENDS go-ftserver)
 
+install(DIRECTORY clients/basic_js_client/ DESTINATION share/FocusTree/clients/basic_js_client USE_SOURCE_PERMISSIONS)
 install(DIRECTORY bin/ DESTINATION bin USE_SOURCE_PERMISSIONS)
 install(PROGRAMS ${CMAKE_BINARY_DIR}/go-ftserver DESTINATION bin)
 install(

@@ -20,12 +20,18 @@ let sendCommand = function(){
         updateCurrentTask();
     };
 
-    req.open('POST', '/send-command');
+    req.open('POST', '/api/send-command');
     req.setRequestHeader("Content-type", "text/text");
     const command = document.getElementById('command').value;
     console.log("sending command ....");
     console.log(command);
-    req.send(command);
+    obj = {
+        "command": command,
+        "args": ""
+    }
+    console.log(obj);
+    console.log(JSON.stringify(obj, null, 2))
+    req.send(JSON.stringify(obj, null, 2));
 };
 
 let updateTreeView = function(){
@@ -43,7 +49,7 @@ updateTreeView();
 
 let updateCurrentTask = function(){
     const req = new XMLHttpRequest();
-    req.open('GET', '/current-task', true);
+    req.open('POST', '/api/send-command', true);
     req.onreadystatechange = function(){
         if(this.readyState != 4){return;}
         if(this.status != 200){console.log(this); return;}
@@ -51,6 +57,12 @@ let updateCurrentTask = function(){
         document.getElementById('current-task').innerHTML = this.responseText;
 
     };
-    req.send();
+    obj = {
+        "command": "current",
+        "args": ""
+    }
+    console.log(obj);
+    console.log(JSON.stringify(obj, null, 2))
+    req.send(JSON.stringify(obj, null, 2));
 };
 updateCurrentTask();
