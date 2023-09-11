@@ -1,25 +1,25 @@
 package focus
 
 import (
-	"io/ioutil"
-	"path"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
-	"strings"
-	"strconv"
+	"path"
 	"path/filepath"
+	"strconv"
+	"strings"
 )
 
 var TheTreeManager *TreeManager = nil
 
 // These should all be fields of tree manager.  It would make
 // a lot more sense.
-var ThePort int    = 5051
+var ThePort int = 5051
 var TheHost string = "0.0.0.0"
 var TheToken string = "1234"
 
@@ -61,12 +61,12 @@ func FindFocusTree(port int) (*TreeManager, error) {
 	d, err := os.Getwd()
 	base := fmt.Sprintf(".focustree.save.%d.json", port)
 	if err != nil {
-		return nil, fmt.Errorf("Could not get cwd: %v", err);
+		return nil, fmt.Errorf("Could not get cwd: %v", err)
 	}
-	for; ; d = path.Dir(d) {
+	for ; ; d = path.Dir(d) {
 		file := path.Join(d, base)
 		t, err := TreeManagerFromFile(file)
-		if  err == nil {
+		if err == nil {
 			fmt.Printf("Using tree file '%s' found from directory search\n", file)
 			return t, nil
 		}
@@ -155,19 +155,18 @@ func rootPath() (string, error) {
 	return path.Join(filepath.Dir(ex), ".."), nil
 }
 
-
 // Favicon tree from https://www.iconpacks.net/free-icon/bonsai-tree-5206.html
-func Favicon(w http.ResponseWriter, r *http.Request){
+func Favicon(w http.ResponseWriter, r *http.Request) {
 	root, err := rootPath()
 	if err != nil {
 		panic(err)
 	}
 	favicon := path.Join(root, "share", "FocusTree", "clients", "basic_js_client", "favicon.png")
 	fmt.Printf("Serving favicon :'%s'\n", favicon)
-	http.ServeFile(w,r,favicon)
+	http.ServeFile(w, r, favicon)
 }
 
-func ServeWebApp(w http.ResponseWriter, r *http.Request){
+func ServeWebApp(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Serving web app")
 	fmt.Printf("Request : r.URL.Path() -> %s\n", r.URL.Path)
 	file := strings.TrimPrefix(r.URL.Path, "/simple-client")
@@ -197,7 +196,7 @@ func ServeWebApp(w http.ResponseWriter, r *http.Request){
 
 	w.WriteHeader(http.StatusOK)
 	h := w.Header()
-	switch(file){
+	switch file {
 	case "/index.html":
 		h.Set("Content-Type", "text/html")
 	case "/main.js":
@@ -221,7 +220,7 @@ func (tm *TreeManager) handleRequest(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
-func(tm *TreeManager) currentContext(w http.ResponseWriter, r *http.Request){
+func (tm *TreeManager) currentContext(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("currentContext(): Sending current context in JSON form\n")
 	root := make([]*TreeNode, 0)
 	current := tm.Current
@@ -244,27 +243,26 @@ func(tm *TreeManager) currentContext(w http.ResponseWriter, r *http.Request){
 
 	b, err := json.Marshal(rootNode)
 	if err != nil {
-		fmt.Printf("Error marshling context");
-		w.WriteHeader(http.StatusInternalServerError);
+		fmt.Printf("Error marshling context")
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(b)
 }
 
-
 type TerminalClientResponse struct {
-	Error      string   `json:"error"`
-	TermOutput string   `json:"term_output"`
-	Command    string   `json:"command"`
-	Status     int      `json:"status"`
+	Error      string `json:"error"`
+	TermOutput string `json:"term_output"`
+	Command    string `json:"command"`
+	Status     int    `json:"status"`
 }
 
 func (tm *TreeManager) FindIncompleteFromCurrent() (*TreeNode, error) {
 
 	c := tm.Current
 
-	for ; c != nil ; c = c.Parent {
+	for ; c != nil; c = c.Parent {
 		fmt.Printf("handleRequest() Examining parent of current : %v\n", c)
 		u, err := c.FindIncompleteChild()
 		if err != nil {
@@ -303,7 +301,7 @@ func (tm *TreeManager) Reset() error {
 
 type FtclientPayload struct {
 	Command string
-	Token string
+	Token   string
 }
 
 func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
@@ -315,16 +313,16 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 	var payload FtclientPayload
 	json.Unmarshal(body, &payload)
-	fmt.Printf("Received Token = '%s'\n", strings.Trim(payload.Token," \n"))
+	fmt.Printf("Received Token = '%s'\n", strings.Trim(payload.Token, " \n"))
 	fmt.Printf("      TheToken = '%s'\n", TheToken)
 
-	if strings.Trim(payload.Token," \n") != TheToken {
+	if strings.Trim(payload.Token, " \n") != TheToken {
 		fmt.Println("Unauthorized access attempted")
 
 		var tr = TerminalClientResponse{
-			Status:     1,
+			Status:  1,
 			Command: string(body),
-			Error: "Access denied your token does not match server token",
+			Error:   "Access denied your token does not match server token",
 		}
 
 		j, err := json.Marshal(tr)
@@ -344,9 +342,8 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	args := words[1:]
 	fmt.Printf("handleCommand(): Comand : %s, Args : %s (len(args): %d)\n", command, args, len(args))
 
-
 	var tr = TerminalClientResponse{
-		Status:     0,
+		Status:  0,
 		Command: string(body),
 	}
 	switch command {
@@ -503,7 +500,7 @@ func (t *TreeNode) FindIncompleteChild() (*TreeNode, error) {
 		}
 	}
 
-	if ! t.Info.Done {
+	if !t.Info.Done {
 		return t, nil
 	}
 
@@ -540,7 +537,6 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 	for _, r := range tm.RootNodes {
 		tm.setParents(r)
 	}
-
 
 	tm.Current = tm.FindSubtaskById(tm.CurrentTaskId)
 	if tm.Current == nil {
@@ -579,14 +575,14 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 }
 func visit(n *TreeNode, f func(*TreeNode)) {
 	f(n)
-	for _,c := range n.Children {
+	for _, c := range n.Children {
 		visit(c, f)
 	}
 }
 
 func (tm *TreeManager) ReassignIds() {
 	var currentId int = 0
-	giveId :=  func(n *TreeNode) {
+	giveId := func(n *TreeNode) {
 		n.Id = currentId
 		currentId++
 	}
@@ -650,7 +646,7 @@ func (tm *TreeManager) PrintableTree(prefix string) string {
 		if r.IsDone() {
 			color = "\033[32m"
 		}
-		fmt.Fprintf(&tree, "%s\u2b95\033[0m %s",color, r.PrintableTree("   " + prefix))
+		fmt.Fprintf(&tree, "%s\u2b95\033[0m %s", color, r.PrintableTree("   "+prefix))
 	}
 	return tree.String()
 }
@@ -672,7 +668,7 @@ func (n *TreeNode) IsDone() bool {
 	}
 
 	for _, c := range n.Children {
-		if ! c.IsDone() {
+		if !c.IsDone() {
 			return false
 		}
 	}
