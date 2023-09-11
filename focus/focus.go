@@ -131,10 +131,12 @@ func FocusTreeServer(port int, host string, file string) {
 
 	m := mux.NewRouter()
 	m.HandleFunc("/", TheTreeManager.handleRequest).Methods("GET")
+	m.HandleFunc("/favicon.ico", Favicon).Methods("GET")
 	m.HandleFunc("/api/tree", TheTreeManager.handleRequest).Methods("GET")
 	m.HandleFunc("/api/send-command", TheTreeManager.handleCommand).Methods("POST")
 	m.HandleFunc("/fuck_my_face", TheTreeManager.JsonTree).Methods("GET")
 	m.PathPrefix("/simple-client").HandlerFunc(ServeWebApp).Methods("GET")
+	m.HandleFunc("/api/current", TheTreeManager.currentContext).Methods("GET")
 
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
@@ -145,21 +147,48 @@ func FocusTreeServer(port int, host string, file string) {
 	http.Serve(l, m)
 }
 
-func ServeWebApp(w http.ResponseWriter, r *http.Request){
-	fmt.Printf("Serving web app")
-	fmt.Printf("Request : r.URL.Path() -> %s\n", r.URL.Path)
-	rest := strings.TrimPrefix(r.URL.Path, "/simple-client")
-	fmt.Printf("Rest of path: %s\n", rest)
-
+func rootPath() (string, error) {
 	ex, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	return path.Join(filepath.Dir(ex), ".."), nil
+}
+
+
+// Favicon tree from https://www.iconpacks.net/free-icon/bonsai-tree-5206.html
+func Favicon(w http.ResponseWriter, r *http.Request){
+	root, err := rootPath()
 	if err != nil {
 		panic(err)
 	}
-	exPath := filepath.Dir(ex)
-	
-	s := path.Join(exPath, "..", "share", "FocusTree", "clients", "basic_js_client", rest)
-	fmt.Printf("file to send back: %s\n", s)
-	fileBytes, err := ioutil.ReadFile(s)
+	favicon := path.Join(root, "share", "FocusTree", "clients", "basic_js_client", "favicon.png")
+	fmt.Printf("Serving favicon :'%s'\n", favicon)
+	http.ServeFile(w,r,favicon)
+}
+
+func ServeWebApp(w http.ResponseWriter, r *http.Request){
+	fmt.Printf("Serving web app")
+	fmt.Printf("Request : r.URL.Path() -> %s\n", r.URL.Path)
+	file := strings.TrimPrefix(r.URL.Path, "/simple-client")
+	fmt.Printf("Rest of path: %s\n", file)
+
+	if file == "/" {
+		file = "/index.html"
+	}
+
+	root, err := rootPath()
+	if err != nil {
+		panic(err)
+	}
+	webAppPath := path.Join(root, "share", "FocusTree", "clients", "basic_js_client")
+	filePath := path.Join(webAppPath, file)
+	fmt.Printf("Serving file %s\n", filePath)
+
+	http.ServeFile(w, r, filePath)
+	return
+	fmt.Printf("file to send back: %s\n", filePath)
+	fileBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		w.WriteHeader(http.StatusNotFound)
@@ -168,11 +197,13 @@ func ServeWebApp(w http.ResponseWriter, r *http.Request){
 
 	w.WriteHeader(http.StatusOK)
 	h := w.Header()
-	switch(rest){
+	switch(file){
 	case "/index.html":
 		h.Set("Content-Type", "text/html")
 	case "/main.js":
 		h.Set("Content-Type", "text/javascript")
+	case "/styles.css":
+		h.Set("Content-Type", "text/css")
 	default:
 		h.Set("Content-Type", "text/html")
 		w.Write([]byte("Unknown file"))
@@ -189,6 +220,38 @@ func (tm *TreeManager) handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(j)
 }
+
+func(tm *TreeManager) currentContext(w http.ResponseWriter, r *http.Request){
+	fmt.Printf("currentContext(): Sending current context in JSON form\n")
+	root := make([]*TreeNode, 0)
+	current := tm.Current
+	for current != nil {
+		root = append([]*TreeNode{current}, root...)
+		current = current.Parent
+	}
+
+	rootNode := NewTreeNode()
+	rootNode.Text = root[0].Text
+	rootNode.Id = root[0].Id
+	current = rootNode
+	for _, r := range root[1:] {
+		child := NewTreeNode()
+		child.Text = r.Text
+		child.Id = r.Id
+		current.AddChild(child)
+		current = child
+	}
+
+	b, err := json.Marshal(rootNode)
+	if err != nil {
+		fmt.Printf("Error marshling context");
+		w.WriteHeader(http.StatusInternalServerError);
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(b)
+}
+
 
 type TerminalClientResponse struct {
 	Error      string   `json:"error"`
@@ -237,6 +300,7 @@ func (tm *TreeManager) Reset() error {
 	tm.CurrentTaskId = 0
 	return nil
 }
+
 type FtclientPayload struct {
 	Command string
 	Token string
@@ -251,8 +315,10 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 	var payload FtclientPayload
 	json.Unmarshal(body, &payload)
+	fmt.Printf("Received Token = '%s'\n", strings.Trim(payload.Token," \n"))
+	fmt.Printf("      TheToken = '%s'\n", TheToken)
 
-	if false && payload.Token != TheToken {
+	if strings.Trim(payload.Token," \n") != TheToken {
 		fmt.Println("Unauthorized access attempted")
 
 		var tr = TerminalClientResponse{

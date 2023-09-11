@@ -1,0 +1,19 @@
+body {
+    background-color: powderblue;
+}
+h1 {
+    color: blue;
+}
+
+.incomplete-task {
+    color: brown;
+}
+
+.completed-task {
+    color: yellow;
+}
+
+.current-task {
+    color: purple;
+    border: thin solid purple;
+}

@@ -3,13 +3,16 @@
     <head>
         <meta charset="UTF-8">
         <title>Focus Tree</title>
+        <link rel="stylesheet" href="styles.css">
     </head>
     <body>
         <H1>FocusTree.phil</H1>
+        <input id="ftserver-token" type="file">
+        <div id="token"></div>
         <p class="label" >Complete Tree:</p>
         <div id="tree" >Tree will go here</div>
         <p class="label" >Current Task:</p>
-        <p id="current-task" >CURRENT TASK</p>
+        <p id="current-task" style="color:purple;font-size:30px;"></p>
         <div>
             <button id="send-button" onclick="sendCommand()" >SEND</button>
             <input id="command" type="text" name="fname"><br>
