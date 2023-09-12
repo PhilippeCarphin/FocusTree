@@ -2,6 +2,11 @@ var ftserver_token
 var tree = null
 const fileSelector = document.getElementById('ftserver-token');
 
+async function periodicUpdates(){
+    updateTreeView()
+    updateCurrentTask()
+}
+
 function init(){
     fileSelector.addEventListener('change', function() {
         var fr = new FileReader();
@@ -12,6 +17,7 @@ function init(){
     });
     updateTreeView();
     updateCurrentTask();
+    setInterval(periodicUpdates, 60*1000);
 }
 
 let sendCommand = function(){
@@ -37,8 +43,7 @@ let sendCommand = function(){
         "token": ftserver_token,
         "html": true
     }
-    console.log(obj)
-    console.log("PISS BUCKET")
+    console.log("Sending command: ", obj)
     req.send(JSON.stringify(obj, null, 2));
 };
 /*
