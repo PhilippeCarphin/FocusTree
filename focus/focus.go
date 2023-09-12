@@ -220,27 +220,43 @@ func (tm *TreeManager) handleRequest(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
+// currentContext creates a subtree which is a path from a root node to the
+// current task and sends this tree in JSON form as the response.
 func (tm *TreeManager) currentContext(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("currentContext(): Sending current context in JSON form\n")
+	/*
+	 * Create the list of pointers to the relevant nodes
+	 */
 	root := make([]*TreeNode, 0)
 	current := tm.Current
 	for current != nil {
 		root = append([]*TreeNode{current}, root...)
 		current = current.Parent
 	}
-
-	rootNode := NewTreeNode()
-	rootNode.Text = root[0].Text
-	rootNode.Id = root[0].Id
+	/*
+	 * Create copies of the nodes and reproduce the subgraph structure
+	 * Note we cannot use NewTreeNode because that would increment the
+	 * global TreeNodeIdCounter used to set IDs of new nodes.
+	 */
+	rootNode := &TreeNode{
+		Text:root[0].Text,
+		Id:root[0].Id,
+		Children: make([]*TreeNode,0),
+	}
 	current = rootNode
 	for _, r := range root[1:] {
-		child := NewTreeNode()
-		child.Text = r.Text
-		child.Id = r.Id
+		child := &TreeNode{
+			Text:r.Text,
+			Id:r.Id,
+			Children: make([]*TreeNode,0),
+		}
 		current.AddChild(child)
 		current = child
 	}
 
+	/*
+	 * Marshal the graph to JSON and send it off
+	 */
 	b, err := json.Marshal(rootNode)
 	if err != nil {
 		fmt.Printf("Error marshling context")
