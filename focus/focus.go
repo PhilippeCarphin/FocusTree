@@ -33,6 +33,7 @@ type TreeNode struct {
 	Parent   *TreeNode    `json:"-"` // Must be ignored for JSON or cycles get created
 	Depth    int          `json:"-"`
 	Manager  *TreeManager `json:"-"`
+	IsAncestorOfCurrent bool `json:"-"`
 }
 
 type TreeNodeInfo struct {
@@ -286,7 +287,7 @@ func (tm *TreeManager) FindIncompleteFromCurrent() (*TreeNode, error) {
 		}
 		if u != nil {
 			fmt.Printf("handleRequest() Setting current node to %v\n", u)
-			tm.Current = u
+			tm.ChangeCurrent(u)
 			return u, nil
 		}
 	}
@@ -300,7 +301,7 @@ func (tm *TreeManager) FindIncompleteFromCurrent() (*TreeNode, error) {
 		}
 		if u != nil {
 			fmt.Printf("handleRequest() Setting current node to %v\n", u)
-			tm.Current = u
+			tm.ChangeCurrent(u)
 			return u, nil
 		}
 	}
@@ -383,7 +384,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		} else {
 			tm.Current.AddChild(t)
 		}
-		tm.Current = t
+		tm.ChangeCurrent(t)
 
 		tr.TermOutput = tm.Current.PrintableAncestors()
 	case "new-task", "new":
@@ -425,8 +426,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 			tr.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
 			break
 		}
-		tm.Current = n
-		tm.CurrentTaskId = n.Id
+		tm.ChangeCurrent(n)
 		fmt.Printf("Set current task by ID to %s\n", n)
 	case "delete-task", "delete":
 		if len(args) == 0 || args[0] == "" {
@@ -525,7 +525,7 @@ func (t *TreeNode) FindIncompleteChild() (*TreeNode, error) {
 
 func (tm *TreeManager) Move(n *TreeNode) {
 	tm.moveStack = append(tm.moveStack, tm.Current)
-	tm.Current = n
+	tm.ChangeCurrent(n)
 }
 
 func (tm *TreeManager) ToFile() error {
@@ -554,7 +554,8 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 		tm.setParents(r)
 	}
 
-	tm.Current = tm.FindSubtaskById(tm.CurrentTaskId)
+	// tm.Current = tm.FindSubtaskById(tm.CurrentTaskId)
+	tm.ChangeCurrentById(tm.CurrentTaskId)
 	if tm.Current == nil {
 		fmt.Printf("Could not set current node according to current_task_id %d\n", tm.CurrentTaskId)
 	} else {
@@ -646,6 +647,7 @@ func (tm *TreeManager) BacktrackMove() *TreeNode {
 	last := len(tm.moveStack) - 1
 	top := tm.moveStack[last]
 	tm.moveStack = tm.moveStack[:last]
+	tm.ChangeCurrent(top)
 	return top
 }
 
@@ -769,22 +771,43 @@ func (n *TreeNode) Ancestors() []*TreeNode {
 }
 
 func (n *TreeNode) String() string {
-	color := "\033[94m"
+	bulletColor := "\033[94m"
+	textColor := "\033[0m"
 	manager := n.Manager
 	if n.Info.Done {
-		if manager != nil && n == n.Manager.Current {
-			color = "\033[35m"
-		} else {
-			color = "\033[32m"
-		}
+		bulletColor = "\033[32m"
 	} else {
-		if manager != nil && n == n.Manager.Current {
-			color = "\033[35m"
-		} else {
-			color = "\033[34m"
+		bulletColor = "\033[34m"
+	}
+
+	if manager != nil {
+		if n == n.Manager.Current {
+			textColor = "\033[1;37m"
+			bulletColor = "\033[35m"
+		} else if n.IsAncestorOfCurrent {
+			textColor = "\033[1m"
 		}
 	}
-	return fmt.Sprintf("\033[90m[%d]\033[0m %s\u2b23 \033[0m %s", n.Id, color, n.Text)
+
+	return fmt.Sprintf("\033[90m[%d]\033[0m %s\u2b23 \033[0m %s%s\033[0m", n.Id, bulletColor, textColor, n.Text)
+}
+
+func (tm *TreeManager) ChangeCurrent(newCurrent *TreeNode) {
+	if tm.Current != nil {
+		for cursor := tm.Current ; cursor != nil ; cursor = cursor.Parent {
+			cursor.IsAncestorOfCurrent = false
+		}
+	}
+	tm.Current = newCurrent
+	tm.CurrentTaskId = newCurrent.Id
+	for cursor := tm.Current ; cursor != nil ; cursor = cursor.Parent {
+		cursor.IsAncestorOfCurrent = true
+	}
+}
+
+func (tm *TreeManager) ChangeCurrentById(id int){
+	newCurrent := tm.FindSubtaskById(id)
+	tm.ChangeCurrent(newCurrent)
 }
 
 func (n *TreeNode) PrintableAncestors() string {
@@ -847,7 +870,7 @@ func (n *TreeNode) PrintableTreeInternal(o io.Writer, prefix string) {
 
 func (tm *TreeManager) Subtask(t *TreeNode) error {
 	tm.Current.AddChild(t)
-	tm.Current = t
+	tm.ChangeCurrent(t)
 	return nil
 }
 
@@ -913,7 +936,7 @@ func (tm *TreeManager) SwitchTask(id int) error {
 		return fmt.Errorf("No node with id '%d' was found", id)
 	}
 
-	tm.Current = n
+	tm.ChangeCurrent(n)
 	return nil
 }
 
