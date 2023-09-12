@@ -449,7 +449,11 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 			tr.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
 			break
 		}
-		tm.DeleteTaskById(id)
+		err = tm.DeleteTaskById(id)
+		if err != nil {
+			tr.Error = fmt.Sprintf("%v", err)
+			tr.Status = 1
+		}
 		tr.TermOutput = fmt.Sprintf("Deleted task with id %d: '%s'", id, n.Text)
 
 	case "subtask-by-id":
@@ -915,18 +919,24 @@ func (tm *TreeManager) DeleteTaskById(id int) error {
 	}
 
 	parent := toDelete.Parent
-	if parent == nil {
-		return fmt.Errorf("Node with id %d has no parent", id)
-	}
-
 	var indexToRemove int
-	for i, c := range parent.Children {
-		if c.Id == id {
-			indexToRemove = i
-			break
+	if parent == nil {
+		for i, r := range tm.RootNodes {
+			if r.Id == id {
+				indexToRemove = i
+				break
+			}
 		}
+		tm.RootNodes = append(tm.RootNodes[:indexToRemove], tm.RootNodes[indexToRemove+1:]...)
+	} else {
+		for i, c := range parent.Children {
+			if c.Id == id {
+				indexToRemove = i
+				break
+			}
+		}
+		parent.Children = append(parent.Children[:indexToRemove], parent.Children[indexToRemove+1:]...)
 	}
-	parent.Children = append(parent.Children[:indexToRemove], parent.Children[indexToRemove+1:]...)
 	return nil
 }
 
