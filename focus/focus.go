@@ -455,6 +455,26 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 			tr.Status = 1
 		}
 		tr.TermOutput = fmt.Sprintf("Deleted task with id %d: '%s'", id, n.Text)
+	case "info":
+		var id int
+		if len(args) == 0 {
+			id = tm.CurrentTaskId
+		} else {
+			id64, err := strconv.ParseInt(args[0], 0, 0)
+			if err != nil {
+				tr.Status = 1
+				tr.Error = fmt.Sprintf("Could not parse numeric ID from '%s': %v", args[0], err)
+				break
+			}
+			id = int(id64)
+		}
+		n := tm.FindSubtaskById(id)
+		if n == nil {
+			tr.Status = 1
+			tr.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
+			break
+		}
+		tr.TermOutput = fmt.Sprintf("Info on task %d - \033[1;37m%s\033[0m: \n\tDone: %t,\n\tClosingNotes: %s\n", id, n.Text,  n.Info.Done, n.Info.ClosingNotes)
 
 	case "subtask-by-id":
 		var id int

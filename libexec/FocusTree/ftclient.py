@@ -97,7 +97,7 @@ def make_prompt_session():
             words = document.text.split()
             complete_words = (words if document.text.endswith(' ')
                                    else words[:-1])
-            if words and words[0] in ['subtask-by-id', 'switch-task', 'delete-task', 'delete']:
+            if words and words[0] in ['subtask-by-id', 'switch-task', 'delete-task', 'delete', 'info']:
                 if len(complete_words) >= 2:
                     return
                 for task in the_tree.root_nodes_iter():

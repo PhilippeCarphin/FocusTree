@@ -380,6 +380,13 @@ class TreeManager:
         pass
 
     @register_command
+    def info(self, args):
+        """ Print info on a task """
+        # ftserver is now the go one, this function is just here to add to the
+        # autocomplete via register_command decorator.
+        pass
+
+    @register_command
     def save_org(self, args):
         """ Save an org-mode file locally"""
         with open(args, 'w+') as f:
