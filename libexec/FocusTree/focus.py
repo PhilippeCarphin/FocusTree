@@ -34,9 +34,9 @@ class TreeNode:
         self.update_depth()
 
     def child_iter(self):
+        yield self
         for node in self.children:
             yield from node.child_iter()
-        yield self
 
     def to_dict(self):
         """Change the node to a dictionary, this is for serializing to JSON for
@@ -216,7 +216,6 @@ class TreeManager:
     def root_nodes_iter(self):
         for node in self.root_nodes:
             yield from node.child_iter()
-        yield node
 
     def ret(self):
         jump = self.jumps.pop()

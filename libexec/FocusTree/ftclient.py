@@ -100,22 +100,25 @@ def make_prompt_session():
             if words and words[0] in ['subtask-by-id', 'switch-task', 'delete-task', 'delete', 'info']:
                 if len(complete_words) >= 2:
                     return
-                for task in the_tree.root_nodes_iter():
-                    if str(task.id).startswith(word) and not task.done:
-                        yield Completion(
-                                str(task.id),
-                                display=f'{task.id} : {task.text}',
-                                start_position=-len(word)
-                        )
+                tasks = the_tree.root_nodes_iter()
+                if words[0] in ['subtask-by-id', 'switch-task']:
+                    tasks = filter(lambda n: not n.done, tasks)
+                # tasks = sorted(tasks, key=lambda n: n.id)
+                tasks = filter(lambda n: str(n.id).startswith(word), tasks)
+                to_completion = lambda n: Completion(
+                        str(n.id),
+                        display=f'{n.id} : {n.text}',
+                        start_position=-len(word))
+                yield from map(to_completion, tasks)
             else:
                 if len(complete_words) >= 1:
                     return
-                for command in list(commands):
-                    if command.startswith(word):
-                        yield Completion(
-                            command,
-                            display=command + ' : ' + commands[command]['help'],
-                            start_position=-len(word))
+                to_completion = lambda c : Completion(
+                        c,
+                        display=f"{c} : {focus.commands[c]['help']}",
+                        start_position=-len(word))
+                cmds = filter(lambda c: c.startswith(word), focus.commands.keys())
+                yield from map(to_completion, cmds)
 
     ft_completer = FuzzyCompleter(CustomComplete())
     # This if I want the help to be displayed
