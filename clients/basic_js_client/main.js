@@ -34,7 +34,7 @@ let sendCommand = function(){
         updateCurrentTask();
     };
 
-    req.open('POST', '/api/send-command');
+    req.open('POST', '../api/send-command');
     req.setRequestHeader("Content-type", "text/text");
     const command = document.getElementById('command').value;
     obj = {
@@ -79,7 +79,7 @@ let updateTreeView = function(){
         tree_div.innerHTML = ""
         tree_div.appendChild(to_ul({"children": tree.root_nodes}, tree.current_task_id))
     };
-    req.open('GET', '/api/tree');
+    req.open('GET', '../api/tree');
     req.send();
 };
 function lineTree(array){
@@ -101,7 +101,7 @@ function lineTree(array){
 
 let updateCurrentTask = function(){
     const req = new XMLHttpRequest();
-    req.open('GET', '/api/current', true);
+    req.open('GET', '../api/current', true);
     req.onreadystatechange = function(){
         if(this.readyState != 4){return;}
         if(this.status != 200){console.log(this); return;}
