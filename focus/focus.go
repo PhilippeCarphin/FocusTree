@@ -477,7 +477,15 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		tr.TermOutput = fmt.Sprintf("Info on task %d - \033[1;37m%s\033[0m: \n\tDone: %t,\n\tClosingNotes: %s\n", id, n.Text,  n.Info.Done, n.Info.ClosingNotes)
-
+        case "not-done":
+		if tm.Current == nil {
+			tr.Status = 1
+			tr.Error = fmt.Sprintf("No current task")
+			break
+		}
+		tm.Current.Info.Done = false
+		tr.Status = 0
+		tr.TermOutput = fmt.Sprintf("Marked current task as Not Done")
 	case "subtask-by-id":
 		var id int
 		nbRead, err := fmt.Sscanf(args[0], "%d", &id)
