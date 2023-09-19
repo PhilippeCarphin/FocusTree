@@ -17,10 +17,14 @@
             Command:
             <input id="command" type="text" name="fname"> (press ENTER to send)<br>
         </div>
+
+        <p class="label" >Output</p>
+        <!-- the <pre> tag preserves newlines and leading spaces
+        necessary for displaying code.  It stands for "preformatted" -->
+        <pre><div id="output" class="output" >_</div></pre>
+
         <p class="label" >Errors: </p>
         <p id="errors" >None</p>
-        <p class="label" >Output</p>
-        <p id="output" >Output will go here</p>
         <!-- It seems that if this file was obtained through
         https://$host/$path1/index.html, then if the src doesn't start
         with a /, i.e., something like $path2/main.js where $path2 does

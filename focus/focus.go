@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"os/exec"
 )
 
 var TheTreeManager *TreeManager = nil
@@ -319,6 +320,7 @@ func (tm *TreeManager) Reset() error {
 type FtclientPayload struct {
 	Command string
 	Token   string
+	Html    bool
 }
 
 func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
@@ -520,12 +522,38 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(string(body))
 	}
 
+	if payload.Html {
+		html, err := ansiToHtml(tr.TermOutput)
+		if err == nil {
+			tr.TermOutput = html
+		} else {
+			fmt.Fprintf(os.Stderr, "Could not convert TermOutput to html: %v", err)
+			tr.Error = fmt.Sprintf("Failed to convert output to HTML: %v", err)
+		}
+	}
+
 	j, err := json.Marshal(tr)
 	if err != nil {
 		fmt.Println(err)
 	}
 	tm.ToFile()
 	w.Write(j)
+}
+
+func ansiToHtml(ansi string) (string, error) {
+	c := exec.Command("aha", "-b", "--no-header")
+	p, err := c.StdinPipe()
+	if err != nil {
+		return "", err
+	}
+	p.Write([]byte(ansi))
+	p.Close()
+
+	out, err := c.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
 }
 
 func (t *TreeNode) FindIncompleteChild() (*TreeNode, error) {

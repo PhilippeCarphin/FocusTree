@@ -5,6 +5,17 @@ h1 {
     color: blue;
 }
 
+#output {
+    background-color: #111;
+    border: thick solid limegreen;
+    color: white;
+    min-height: 100px;
+}
+
+#errors {
+    
+}
+
 .incomplete-task {
     color: brown;
 }
