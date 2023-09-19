@@ -28,3 +28,12 @@ h1 {
     color: purple;
     border: thin solid purple;
 }
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+td {
+    padding: 5px;
+}
+

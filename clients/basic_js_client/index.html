@@ -25,6 +25,27 @@
 
         <p class="label" >Errors: </p>
         <p id="errors" >None</p>
+
+        <h1>Help</h1>
+
+        ID is the number displayed in square brackets on the left of the tasks and TEXT is the text that will become the title of a new task.
+        NOTES will become the closing notes of the task that will be visible as a tooltip when hovering over the task in the tree view.
+<table>
+<tr><td>tree</td><td>Get a printable tree</td></tr>
+<tr><td>current</td><td>Get a printable list of ancestors</td></tr>
+<tr><td>next-task TEXT</td><td>Add a new sibling to the current task</td></tr>
+<tr><td>new-task TEXT</td><td>Create a new root task</td></tr>
+<tr><td>subtask TEXT</td><td>Create and enter a new subtask of the current task</td></tr>
+<tr><td>done NOTES</td><td>Mark the current task as done (with optional closing notes)</td></tr>
+<tr><td>help</td><td>Show the list of commands and their descriptions</td></tr>
+<tr><td>subtask-by-id ID TEXT</td><td>Create a subtask of task with the specified id</td></tr>
+<tr><td>delete-task ID</td><td> Delete a task by id </td></tr>
+<tr><td>info [ID]</td><td> Print info on a task (if ID not specified, then current task)</td></tr>
+<tr><td>switch-task ID</td><td>Switch to the task with the specified id</td></tr>
+<tr><td>reset</td><td>Clear the whole tree</td></tr>
+<tr><td>reassign-ids</td><td>Reassign all the ids in the case that they got messed up.</td></tr>
+<tr><td>not-done</td><td>Mark the current task as not doen</td></tr>
+</table>
         <!-- It seems that if this file was obtained through
         https://$host/$path1/index.html, then if the src doesn't start
         with a /, i.e., something like $path2/main.js where $path2 does
