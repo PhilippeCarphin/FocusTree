@@ -16,6 +16,12 @@ function init(){
     });
     updateViews()
     setInterval(periodicUpdates, 60*1000);
+    document.getElementById('command').addEventListener('keypress', (event) => {
+        if(event.key === "Enter"){
+            event.preventDefault()
+            sendCommand()
+        }
+    })
 }
 
 let sendCommand = function(){
@@ -33,13 +39,15 @@ let sendCommand = function(){
 
     req.open('POST', '../api/send-command');
     req.setRequestHeader("Content-type", "text/text");
-    const command = document.getElementById('command').value;
+    command = document.getElementById('command')
     obj = {
-        "command": command,
+        "command": command.value,
         "args": "",
         "token": ftserver_token,
         "html": true
     }
+    command.value = ""
+    console.log("command.value: ", command.value)
     console.log("Sending command: ", obj)
     req.send(JSON.stringify(obj, null, 2));
 };
