@@ -57,13 +57,20 @@ let sendCommand = function(){
 function to_ul (obj, currentTaskId) {
   var i, li, ul = document.createElement ("ul");
   obj.children.forEach((child) => {
-    li = document.createElement ("li");
-    li.appendChild(document.createTextNode("[" + child.id + "] " + child.text));
+    li = document.createElement("li");
+    div = document.createElement("div");
+    div.innerHTML = "[" + child.id + "] " + child.text
+    div.className = "task"
+    li.appendChild(div)
     if(child.id == currentTaskId){
-        // li.style.color = "yellow"
+        li.style.color = "purple"
         li.className = "current-task"
-        // li.style.border = "thin solid purple"
+        li.style.border = "thin solid purple"
     } else if(child.info.done){
+        tooltip = document.createElement("span")
+        tooltip.className = "tooltiptext"
+        tooltip.innerHTML = child.info.closing_notes ? "Closing notes: " + child.info.closing_notes : " - "
+        div.appendChild(tooltip)
         li.style.color = "green"
     } else {
         li.style.color = "red"
