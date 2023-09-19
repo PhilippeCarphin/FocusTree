@@ -3,8 +3,7 @@ var tree = null
 const fileSelector = document.getElementById('ftserver-token');
 
 async function periodicUpdates(){
-    updateTreeView()
-    updateCurrentTask()
+    updateViews()
 }
 
 function init(){
@@ -15,8 +14,7 @@ function init(){
         }
         fr.readAsText(this.files[0])
     });
-    updateTreeView();
-    updateCurrentTask();
+    updateViews()
     setInterval(periodicUpdates, 60*1000);
 }
 
@@ -30,8 +28,7 @@ let sendCommand = function(){
         document.getElementById('errors').innerHTML = resp.error;
         document.getElementById('output').innerHTML = resp.term_output;
 
-        updateTreeView();
-        updateCurrentTask();
+        updateViews()
     };
 
     req.open('POST', '../api/send-command');
@@ -68,13 +65,17 @@ function to_ul (obj, currentTaskId) {
   })
   return ul;
 }
-let updateTreeView = function(){
+let updateViews = function(){
     let req = new XMLHttpRequest();
     req.onreadystatechange = function(){
         if(this.readyState != 4){return;}
         if(this.status != 200){console.log(this); return;}
 
         tree = JSON.parse(this.responseText);
+        // the current task view uses tree.current_task_id
+        // which is dependant on the api/tree request having
+        // been completed.  Perhaps this is a flaw.
+        updateCurrentTask()
         const tree_div = document.getElementById("tree")
         tree_div.innerHTML = ""
         tree_div.appendChild(to_ul({"children": tree.root_nodes}, tree.current_task_id))
