@@ -6,6 +6,23 @@ from termcolor import colored
 class FocusTreeException(Exception):
     pass
 
+class TreeNodeInfo:
+    def __init__(self, **kwargs):
+        self.closing_notes = kwargs.get('closing_notes', None)
+        self.created_on = kwargs.get(
+            'created_on',
+            datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)"))
+        self.finished_on = kwargs.get(
+            'finished_on',
+            None)
+        self.done = kwargs.get('done', False)
+    def to_dict(self):
+        return {
+                "done": self.done,
+                "closing_notes": self.closing_notes,
+                "created": str(self.created_on),
+                "finished": str(self.finished_on) if self.done else None
+            }
 
 class TreeNode:
     """Basic noce of the focus tree.
@@ -16,15 +33,8 @@ class TreeNode:
         # This node's stuff
         type(self).TreeNode_Counter += 1
         self.text = kwargs.get('text', 'this node')
-        self.done = kwargs.get('done', False)
-        self.closing_notes = kwargs.get('closing_notes', None)
         self.id = kwargs.get('id', self.TreeNode_Counter)
-        self.created_on = kwargs.get(
-            'created_on',
-            datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)"))
-        self.finished_on = kwargs.get(
-            'finished_on',
-            None)
+        self.info = TreeNodeInfo(**kwargs)
 
         # Relationships with other nodes
         self.children = []
@@ -38,19 +48,14 @@ class TreeNode:
         for node in self.children:
             yield from node.child_iter()
 
-    def to_dict(self):
+    def to_dict(self, with_children=True):
         """Change the node to a dictionary, this is for serializing to JSON for
         transfer over HTTP or to a file"""
         return {
             "id": self.id,
             "text": self.text,
             "children": [ c.to_dict() for c in self.children],
-            "info": {
-                "done": self.done,
-                "closing_notes": self.closing_notes,
-                "created": str(self.created_on),
-                "finished": str(self.finished_on) if self.done else None
-            }
+            "info": self.info.to_dict()
         }
 
     @staticmethod
@@ -59,14 +64,14 @@ class TreeNode:
         from HTTP or a file"""
         if not dict:
             return TreeNode()
-        node_info = d["info"]
+        info = d["info"]
         node = TreeNode(
             text=d["text"],
-            created_on=node_info["created"],
-            finished_on=node_info["finished"],
-            done=node_info['done'],
             id=d["id"],
-            closing_notes=node_info["closing_notes"]
+            created_on=info["created"],
+            finished_on=info["finished"],
+            done=info['done'],
+            closing_notes=info["closing_notes"]
         )
         for c in d["children"]:
             node.add_child(TreeNode.from_dict(c))
@@ -76,12 +81,12 @@ class TreeNode:
         """Create an org-mode text representation of the tree of this Node
         This is for saving an org-mode report"""
         self.update_depth()
-        org_todo_keyword = 'DONE' if self.done else 'TODO'
+        org_todo_keyword = 'DONE' if self.info.done else 'TODO'
         stars = '\n' + '*'*(self.depth + starting_depth)
         output = stars + ' ' + org_todo_keyword + ' ' + self.text + '\n'
-        output += 'created_on : ' + self.created_on + '\n'
+        output += 'created_on : ' + self.info.created_on + '\n'
         output += 'closing_notes : ' + str(self.closing_notes) + '\n'
-        output += 'finished_on : ' + str( self.finished_on ) + '\n'
+        output += 'finished_on : ' + str( self.info.finished_on ) + '\n'
         output += '\n'.join([c.to_org(starting_depth) for c in self.children])
         return output
 
@@ -108,7 +113,7 @@ class TreeNode:
             if not c.is_done():
                 return False
 
-        return self.done
+        return self.info.done
 
     def find_subtask_by_id(self, id):
         """Return the task whose id matches the parameter. This is for turing id-based
@@ -122,14 +127,34 @@ class TreeNode:
                 return c_with_id
         return None
 
-    def ancestors(self):
+    def ancestors(self) -> list:
         """Get a list of the ancestors of this node"""
         ancestors = []
         current = self
         while current:
-            ancestors.append(str(current))
+            ancestors.append(current)
             current = current.parent
-        return '\n'.join(reversed(ancestors))
+        return reversed(ancestors)
+
+    def ancestors_dict(self):
+        d = {"text": self.text,
+             "info": self.info.to_dict(),
+             "id": self.id,
+             "children": []
+        }
+        current_d = d
+        current = self
+        while current.parent is not None:
+            parent = current.parent
+            d = {
+                    "text": parent.text,
+                    "info": parent.info.to_dict(),
+                    "id": parent.id,
+                    "children": [current_d]
+            }
+            current_d = d
+            current = parent
+        return current_d
 
     def __str__(self):
         """The string representation of nodes is meant to be shown in a terminal as a
@@ -137,11 +162,11 @@ class TreeNode:
         methods."""
         first_part = self.text + " (id={},{})[created: {}".format(
             self.id,
-            "DONE" if self.done else "ongoing",
-            self.created_on
+            "DONE" if self.info.done else "ongoing",
+            self.info.created_on
         )
-        if self.done:
-            finished = " finished: {}".format(self.finished_on)
+        if self.info.done:
+            finished = " finished: {}".format(self.info.finished_on)
         else:
             finished = ""
         return first_part + finished + ']'
@@ -257,7 +282,7 @@ class TreeManager:
             for c in n.children:
                 res = find_not_done_dfs(c)
                 if res: return res
-            if not n.done:
+            if not n.info.done:
                 return n
 
             return None
@@ -482,13 +507,13 @@ class TreeManager:
         """Mark the current task as done (with optional closing notes)"""
         if self.current_task is None:
             raise FocusTreeException("No current task")
-        self.current_task.done = True
+        self.current_task.info.done = True
         if not self.current_task.is_done():
-            self.current_task.done = False
+            self.current_task.info.done = False
             raise FocusTreeException("Cannot mark done, task has unfinished children")
         else:
             self.current_task.closing_notes = args
-            self.current_task.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
+            self.current_task.info.finished_on = datetime.datetime.now().strftime("(%Y-%m-%d %H:%M:%S)")
             self.update()
 
         return self.current(None)

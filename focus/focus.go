@@ -243,6 +243,7 @@ func (tm *TreeManager) currentContext(w http.ResponseWriter, r *http.Request) {
 	rootNode := &TreeNode{
 		Text:root[0].Text,
 		Id:root[0].Id,
+		Info: root[0].Info,
 		Children: make([]*TreeNode,0),
 	}
 	current = rootNode
@@ -250,6 +251,7 @@ func (tm *TreeManager) currentContext(w http.ResponseWriter, r *http.Request) {
 		child := &TreeNode{
 			Text:r.Text,
 			Id:r.Id,
+			Info: r.Info,
 			Children: make([]*TreeNode,0),
 		}
 		current.AddChild(child)

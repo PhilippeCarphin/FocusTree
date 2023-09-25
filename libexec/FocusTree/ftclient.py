@@ -102,7 +102,7 @@ def make_prompt_session():
                     return
                 tasks = the_tree.root_nodes_iter()
                 if words[0] in ['subtask-by-id', 'switch-task']:
-                    tasks = filter(lambda n: not n.done, tasks)
+                    tasks = filter(lambda n: not n.info.done, tasks)
                 # tasks = sorted(tasks, key=lambda n: n.id)
                 tasks = filter(lambda n: str(n.id).startswith(word), tasks)
                 to_completion = lambda n: Completion(
@@ -201,7 +201,6 @@ class ServerProcess:
         self.process = subprocess.Popen(
             f'ftserver --port {args.port} --host {args.host}',
             shell=True,
-            stderr=subprocess.DEVNULL,
         )
     def __exit__(self, type, value, traceback):
         self.process.terminate()

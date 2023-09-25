@@ -8,6 +8,10 @@ import os.path
 import focus
 import mailtool
 
+this_dir = os.path.dirname(os.path.realpath(__file__))
+base_dir = os.path.join(this_dir, '..', '..')
+simple_client_dir = os.path.join(base_dir, "share", "FocusTree", "clients", "basic_js_client")
+
 def port_is_available(p):
     """
 ``
@@ -71,11 +75,14 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         errors = None
         term_output = None
         term_error = None
+        content_length = int(self.headers['Content-Length'])
+        payload = self.rfile.read(content_length)
+        data = json.loads(payload)
 
         if self.path == '/api/send-command':
             self.send_response(200)
             content_length = int(self.headers['Content-Length'])
-            command_line = self.rfile.read(content_length).decode('utf-8')
+            command_line = data['command']
 
             server_commands = ['send-org', 'so', 'save-file']
             try:
@@ -99,7 +106,7 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(bytes(json.dumps(resp), 'utf-8'))
 
-        elif self.path == '/api/send-tree':
+        elif self.path == '/api/tree':
             self.send_response(200)
             content_length = int(self.headers['Content-Length'])
             tree_json = self.rfile.read(content_length).decode('utf-8')
@@ -129,28 +136,32 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         elif self.path.startswith('/simple-client/'):
             return self.serve_simple_client()
         else:
-            try:
-                return self.serve_static_react()
-            except FileNotFoundError as e:
-                print("serving static react: " + str(e))
+            print(f"Unknown path: {self.path}")
+            self.send_response(500)
 
     def serve_api(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         if self.path == '/api/tree':
             return self.send_tree()
-        elif self.path == '/api/current-task':
+        elif self.path == '/api/current':
             return self.send_current()
 
     def serve_simple_client(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         if self.path == '/simple-client/main.js':
-            self.send_javascript('main.js')
-        elif self.path == '/simple-client/index.html':
+            self.send_header('Content-type', 'application/javascript')
+            self.end_headers()
+            self.send_file(os.path.join(simple_client_dir, 'main.js'))
+        elif self.path == '/simple-client/index.html' or self.path == '/simple-client/':
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-            self.send_file('index.html')
+            self.send_file(os.path.join(simple_client_dir, 'index.html'))
+        elif self.path == '/simple-client/styles.css':
+            self.send_header('Content-type', 'text/css')
+            self.end_headers()
+            self.send_file(os.path.join(simple_client_dir, 'styles.css'))
 
     def serve_static_react(self):
         # SERVE FILES FOR REACT WEB CLIENT
@@ -184,11 +195,6 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         with open(filename, 'rb') as f:
             self.wfile.write(f.read())
 
-    def send_javascript(self, filename):
-        self.send_header('Content-type', 'application/javascript')
-        self.end_headers()
-        self.send_file(filename)
-
     def send_tree(self):
         self.send_header('Content-type', 'application/json')
         self.end_headers()
@@ -197,6 +203,15 @@ class FocusTreeRequestHandler(BaseHTTPRequestHandler):
         # message = json.dumps(hopefully_the_tree.to_dict())
         message = json.dumps(THE_TREE.to_dict())
         self.wfile.write(bytes(message, 'utf-8'))
+    def send_current(self):
+        ancestors_dict = THE_TREE.current_task.ancestors_dict()
+        print(f"ANCESTORS_DICT = {ancestors_dict}")
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        message = json.dumps(ancestors_dict)
+        self.wfile.write(bytes(message, 'utf-8'))
+
+
 
 if __name__ == "__main__":
 
@@ -227,6 +242,7 @@ if __name__ == "__main__":
             THE_TREE = focus.TreeManager()
 
         print('Starting server on host {host}, port {port}'.format(host=args.host, port=args.port))
+        print(f"Using save_file = '{save_file}'")
 
         server = HTTPServer(
             (args.host, args.port),
