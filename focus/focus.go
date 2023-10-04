@@ -39,9 +39,9 @@ type TreeNode struct {
 
 type TreeNodeInfo struct {
 	Done         bool   `json:"done"`
-	CreatedOn    string `json:"created"`
+	CreatedOn    string `json:"created_on"`
 	ClosingNotes string `json:"closing_notes"`
-	FinishedOn   string `json:"finished"`
+	FinishedOn   string `json:"finished_on"`
 }
 
 type TreeManager struct {
