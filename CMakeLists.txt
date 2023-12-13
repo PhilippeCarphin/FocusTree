@@ -23,6 +23,13 @@ add_custom_command(
 )
 add_custom_target(goftserver ALL DEPENDS go-ftserver)
 
+add_custom_command(
+    OUTPUT go-ftprint
+    COMMAND go build ${CMAKE_SOURCE_DIR}/goftprint/main.go && mv main ${CMAKE_BINARY_DIR}/go-ftprint
+    DEPENDS ${CMAKE_SOURCE_DIR}/focus/focus.go;${CMAKE_SOURCE_DIR}/goftprint/main.go
+)
+add_custom_target(goftprint ALL DEPENDS go-ftprint)
+
 install(DIRECTORY clients/basic_js_client/ DESTINATION share/FocusTree/clients/basic_js_client USE_SOURCE_PERMISSIONS)
 install(DIRECTORY bin/ DESTINATION bin USE_SOURCE_PERMISSIONS)
 install(PROGRAMS ${CMAKE_BINARY_DIR}/go-ftserver DESTINATION bin)
