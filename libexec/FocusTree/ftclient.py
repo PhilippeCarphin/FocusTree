@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import time
 import subprocess
 import requests
@@ -24,6 +25,9 @@ TOKEN = None
 the_tree = None
 
 class REPLDoneError(Exception):
+    pass
+
+class BadServerError(Exception):
     pass
 
 def read_command(prompt):
@@ -170,6 +174,10 @@ def make_prompt_session():
 def get_tree():
     request_url = f'http://{args.host}:{args.port}/api/tree'
     resp = requests.get(request_url)
+    if resp.status_code != 200:
+        e = BadServerError(f"Initial request '{request_url}' (no data) failed with code {resp.status_code}")
+        e.response = resp
+        raise e
     return focus.TreeManager.from_dict(resp.json())
 
 def save_org_command(filename, tree):
@@ -214,6 +222,12 @@ if __name__ == "__main__":
               .format(args.host, args.port))
 
     home = os.environ['HOME']
+    if 'http_proxy' in os.environ:
+        print(f"{os.path.basename(sys.argv[0])}: \033[33mWARNING\033[0m: Unsetting environment variable 'http_proxy'")
+        del os.environ['http_proxy']
+    if 'HTTP_PROXY' in os.environ:
+        print(f"{os.path.basename(sys.argv[0])}: \033[33mWARNING\033[0m: Unsetting environment variable 'HTTP_PROXY'")
+        del os.environ['HTTP_PROXY']
     with open(os.path.expanduser('~/.ssh/ftserver_token')) as f:
         TOKEN = f.read().strip() # Just the actual key
     print(TOKEN)
@@ -221,6 +235,9 @@ if __name__ == "__main__":
     try:
         # There is already a server running
         get_tree()
+    except BadServerError as e:
+        print(f"{os.path.basename(sys.argv[0])}: \033[1;31mERROR\033[0m: ({type(e).__name__}) {e}")
+        sys.exit(1)
     except requests.exceptions.ConnectionError as e:
         print(f'No server running on {args.host}:{args.port}, starting manually on ...')
         with ServerProcess(args):

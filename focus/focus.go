@@ -2,6 +2,7 @@ package focus
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
@@ -85,6 +86,12 @@ func FindFocusTree(port int) (*TreeManager, error) {
 	}
 	file := path.Join(home, base)
 	fmt.Printf("Using file from '%s' from home directory\n", file)
+
+	if _, err:= os.Stat(file) ; errors.Is(err, os.ErrNotExist) {
+		tm := NewTreeManager()
+		tm.File = file
+		tm.ToFile()
+	}
 	return TreeManagerFromFile(file)
 }
 
@@ -615,11 +622,13 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 	}
 
 	// tm.Current = tm.FindSubtaskById(tm.CurrentTaskId)
-	tm.ChangeCurrentById(tm.CurrentTaskId)
-	if tm.Current == nil {
-		fmt.Printf("Could not set current node according to current_task_id %d\n", tm.CurrentTaskId)
-	} else {
-		fmt.Printf("Current task is %v\n", tm.Current)
+	if len(tm.RootNodes) > 0 && tm.CurrentTaskId != -1 {
+		tm.ChangeCurrentById(tm.CurrentTaskId)
+		if tm.Current == nil {
+			fmt.Printf("Could not set current node according to current_task_id %d\n", tm.CurrentTaskId)
+		} else {
+			fmt.Printf("Current task is %v\n", tm.Current)
+		}
 	}
 
 	// Reassigning IDs is how I'm making the global TreeNodeIdCounter
@@ -1004,6 +1013,10 @@ func (tm *TreeManager) SwitchTask(id int) error {
 
 	tm.ChangeCurrent(n)
 	return nil
+}
+
+func NewTestTree() *TreeNode {
+	return newTestTree()
 }
 
 func newTestTree() *TreeNode {
