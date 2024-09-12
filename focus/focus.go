@@ -858,7 +858,7 @@ func (n *TreeNode) String() string {
 		}
 	}
 
-	return fmt.Sprintf("\033[90m[%d]\033[0m %s\u2b23 \033[0m %s%s\033[0m", n.Id, bulletColor, textColor, n.Text)
+	return fmt.Sprintf("\033[90m[%d]\033[0m %s\u2b24 \033[0m %s%s\033[0m", n.Id, bulletColor, textColor, n.Text)
 }
 
 func (tm *TreeManager) ChangeCurrent(newCurrent *TreeNode) {
