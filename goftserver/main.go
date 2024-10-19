@@ -2,11 +2,14 @@ package main
 
 import (
 	"flag"
-	// "fmt"
+	"fmt"
+	"os"
 	"github.com/philippecarphin/FocusTree/focus"
 )
 
+
 func main() {
+
 	var port int
 	var file string
 	var host string
@@ -18,11 +21,25 @@ func main() {
 	flag.BoolVar(&new, "new", false, "Create empty tree with filename")
 	flag.Parse()
 
-	// if new {
-	// 	tm := focus.NewTreeManager()
-	// 	tm.File = file
-	// 	tm.ToFile()
-	// }
+	// Can't put the default value in the 'value' argument of flag.StringVar
+	// because it depends on the port.
+	if file == "" {
+		file = focus.DefaultFileName(port)
+	}
 
-	focus.FocusTreeServer(port, host, file)
+	if new {
+		tm := focus.NewTreeManager()
+		tm.File = file
+		err := tm.ToFile()
+		if err != nil {
+			fmt.Printf("\033[1;31mERROR\033[0m: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	err := focus.FocusTreeServer(port, host, file)
+	if err != nil {
+		fmt.Printf("\033[1;31mERROR\033[0m: %v\n", err)
+		os.Exit(1)
+	}
 }

@@ -95,24 +95,23 @@ func FindFocusTree(port int) (*TreeManager, error) {
 	return TreeManagerFromFile(file)
 }
 
-func FocusTreeServer(port int, host string, file string) {
+func FocusTreeServer(port int, host string, file string) error {
 	if file == "" {
 		t, err := FindFocusTree(port)
 		if err != nil {
-			fmt.Printf("Could not find focus tree file : %v\n", err)
+			return fmt.Errorf("could not load focus tree file: %v", err)
 		}
 		TheTreeManager = t
 	} else {
 		t, err := TreeManagerFromFile(file)
 		if err != nil {
-			fmt.Printf("Could not get Focus Tree from file '%s': %v\n", file, err)
+			return fmt.Errorf("could not get Focus Tree from file '%s': %v", file, err)
 		}
 		TheTreeManager = t
 	}
 
 	if TheTreeManager == nil {
-		fmt.Printf("Could not create Tree\n")
-		return
+		return fmt.Errorf("Unexpected error: TheTreeManager is nil")
 	}
 
 	fmt.Printf("Using '%s' as Tree file\n", TheTreeManager.File)
@@ -124,9 +123,9 @@ func FocusTreeServer(port int, host string, file string) {
 	tokenFile := path.Join(home, ".ssh", "ftserver_token")
 	content, err := os.ReadFile(tokenFile)
 	if err != nil {
-		fmt.Printf("Could not get auth token from file '%s': %v\n", tokenFile, err)
-		return
+		return fmt.Errorf("Could not get auth token from file '%s': %v", tokenFile, err)
 	}
+
 	// TheToken = string(content)
 	TheToken = strings.Trim(string(content), " \n")
 	fmt.Printf("The token is '%s'\n", TheToken)
@@ -154,6 +153,7 @@ func FocusTreeServer(port int, host string, file string) {
 	fmt.Printf("Starting server on host %s, port %d\n", host, port)
 
 	http.Serve(l, m)
+	return nil
 }
 
 func rootPath() (string, error) {
@@ -623,7 +623,10 @@ func TreeManagerFromFile(filename string) (*TreeManager, error) {
 
 	// tm.Current = tm.FindSubtaskById(tm.CurrentTaskId)
 	if len(tm.RootNodes) > 0 && tm.CurrentTaskId != -1 {
-		tm.ChangeCurrentById(tm.CurrentTaskId)
+		err := tm.ChangeCurrentById(tm.CurrentTaskId)
+		if err != nil {
+			return nil, err
+		}
 		if tm.Current == nil {
 			fmt.Printf("Could not set current node according to current_task_id %d\n", tm.CurrentTaskId)
 		} else {
@@ -874,9 +877,13 @@ func (tm *TreeManager) ChangeCurrent(newCurrent *TreeNode) {
 	}
 }
 
-func (tm *TreeManager) ChangeCurrentById(id int){
+func (tm *TreeManager) ChangeCurrentById(id int) error {
 	newCurrent := tm.FindSubtaskById(id)
+	if newCurrent == nil {
+		return fmt.Errorf("could not find task with ID %d", id)
+	}
 	tm.ChangeCurrent(newCurrent)
+	return nil
 }
 
 func (n *TreeNode) PrintableAncestors() string {
