@@ -60,9 +60,13 @@ func NewTreeManager() *TreeManager {
 	}
 }
 
+func DefaultFileName(port int) string {
+	return fmt.Sprintf(".focustree.save.%d.json", port)
+}
+
 func FindFocusTree(port int) (*TreeManager, error) {
 	d, err := os.Getwd()
-	base := fmt.Sprintf(".focustree.save.%d.json", port)
+	base := DefaultFileName(port)
 	if err != nil {
 		return nil, fmt.Errorf("Could not get cwd: %v", err)
 	}
