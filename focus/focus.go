@@ -19,10 +19,6 @@ import (
 
 var TheTreeManager *TreeManager = nil
 
-// These should all be fields of tree manager.  It would make
-// a lot more sense.
-var ThePort int = 5051
-var TheHost string = "0.0.0.0"
 var TheToken string = "1234"
 
 var TreeNodeIdCounter = 0
