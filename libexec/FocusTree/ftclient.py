@@ -60,6 +60,12 @@ def eval_command(command_line='current'):
             tree = focus.TreeManager.load_from_file(words[1])
             payload = bytes(json.dumps(tree.to_dict()), 'utf-8')
             resp = requests.post(request_url, data=payload).json()
+        elif operation == 'help':
+            print("<table>")
+            for name, obj in focus.commands.items():
+                print(f"<tr><td>{name}</td><td>{obj['help']}</td></tr>")
+            print("</table>")
+            resp = {'status':0, 'term_output': ''}
     else:
         request_url = f'http://{args.host}:{args.port}/api/send-command'
         resp = requests.post(request_url, data=bytes(json.dumps(payload), 'utf-8')).json()
