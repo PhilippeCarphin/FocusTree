@@ -138,11 +138,10 @@ func FocusTreeServer(port int, host string, file string) error {
 	// TheToken = words[1]
 
 	m := mux.NewRouter()
-	m.HandleFunc("/", TheTreeManager.handleRequest).Methods("GET")
+	m.HandleFunc("/", TheTreeManager.sendTree).Methods("GET")
 	m.HandleFunc("/favicon.ico", Favicon).Methods("GET")
-	m.HandleFunc("/api/tree", TheTreeManager.handleRequest).Methods("GET")
+	m.HandleFunc("/api/tree", TheTreeManager.sendTree).Methods("GET")
 	m.HandleFunc("/api/send-command", TheTreeManager.handleCommand).Methods("POST")
-	m.HandleFunc("/fuck_my_face", TheTreeManager.JsonTree).Methods("GET")
 	m.PathPrefix("/simple-client").HandlerFunc(ServeWebApp).Methods("GET")
 	m.HandleFunc("/api/current", TheTreeManager.currentContext).Methods("GET")
 	m.HandleFunc("/authenticate", Authenticate).Methods("POST")
@@ -258,12 +257,16 @@ func ServeWebApp(w http.ResponseWriter, r *http.Request) {
 	w.Write(fileBytes)
 }
 
-func (tm *TreeManager) handleRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("handleRequest(): Sending tree in JSON form\n")
+func (tm *TreeManager) sendTree(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("sendTree(): Sending tree in JSON form\n")
 	j, err := json.MarshalIndent(TheTreeManager, "    ", "    ")
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Printf("Error Could not marshal tree to JSON : %v", err)
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(j)
 }
 
@@ -326,27 +329,27 @@ func (tm *TreeManager) FindIncompleteFromCurrent() (*TreeNode, error) {
 	c := tm.Current
 
 	for ; c != nil; c = c.Parent {
-		fmt.Printf("handleRequest() Examining parent of current : %v\n", c)
+		fmt.Printf("FindIncompleteFromCurrent() Examining parent of current : %v\n", c)
 		u, err := c.FindIncompleteChild()
 		if err != nil {
 			panic(err)
 		}
 		if u != nil {
-			fmt.Printf("handleRequest() Setting current node to %v\n", u)
+			fmt.Printf("FindIncompleteFromCurrent() Setting current node to %v\n", u)
 			tm.ChangeCurrent(u)
 			return u, nil
 		}
 	}
 
 	for _, r := range tm.RootNodes {
-		fmt.Printf("handleRequest() Examining root node : %v\n", r)
+		fmt.Printf("FindIncompleteFromCurrent() Examining root node : %v\n", r)
 		fmt.Println(r.Text)
 		u, err := r.FindIncompleteChild()
 		if err != nil {
 			panic(err)
 		}
 		if u != nil {
-			fmt.Printf("handleRequest() Setting current node to %v\n", u)
+			fmt.Printf("FindIncompleteFromCurrent() Setting current node to %v\n", u)
 			tm.ChangeCurrent(u)
 			return u, nil
 		}
@@ -784,17 +787,6 @@ func (tm *TreeManager) PrintableTree(prefix string) string {
 		fmt.Fprintf(&tree, "%s\u2b95\033[0m %s", color, r.PrintableTree("   "+prefix))
 	}
 	return tree.String()
-}
-
-func (tm *TreeManager) JsonTree(w http.ResponseWriter, r *http.Request) {
-	b, err := json.Marshal(tm)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(b)
 }
 
 func (n *TreeNode) IsDone() bool {
