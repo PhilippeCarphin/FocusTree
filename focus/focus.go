@@ -247,44 +247,17 @@ func (tm *TreeManager) currentContext(w http.ResponseWriter, r *http.Request) {
 	/*
 	 * Create the list of pointers to the relevant nodes
 	 */
-	root := make([]*TreeNode, 0)
+	path := make([]*TreeNode, 0)
 	current := tm.Current
 	for current != nil {
-		root = append([]*TreeNode{current}, root...)
+		path = append([]*TreeNode{current}, path...)
 		current = current.Parent
 	}
-	/*
-	 * Create copies of the nodes and reproduce the subgraph structure
-	 * Note we cannot use NewTreeNode because that would increment the
-	 * global TreeNodeIdCounter used to set IDs of new nodes.
-	 */
-	rootNode := &TreeNode{
-		Text:root[0].Text,
-		Id:root[0].Id,
-		Children: make([]*TreeNode,0),
-	}
-	current = rootNode
-	for _, r := range root[1:] {
-		child := &TreeNode{
-			Text:r.Text,
-			Id:r.Id,
-			Children: make([]*TreeNode,0),
-		}
-		current.AddChild(child)
-		current = child
-	}
-
-	/*
-	 * Marshal the graph to JSON and send it off
-	 */
-	b, err := json.Marshal(rootNode)
+	p, err := json.Marshal(path)
 	if err != nil {
-		fmt.Printf("Error marshling context")
-		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Printf("currentContext(): ERROR: Could not marshal node path\n")
 	}
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(b)
+	w.Write(p)
 }
 
 type TerminalClientResponse struct {

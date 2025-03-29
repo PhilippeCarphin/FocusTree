@@ -65,28 +65,52 @@ let sendCommand = function(){
 function to_ul (obj, currentTaskId) {
   var i, li, ul = document.createElement ("ul");
   obj.children.forEach((child) => {
-    li = document.createElement("li");
-    div = document.createElement("div");
-    div.innerHTML = "[" + child.id + "] " + child.text
+    li = task_to_html(child, currentTaskId)
+    li.appendChild (to_ul (child, currentTaskId));
+    ul.appendChild (li);
+  })
+  return ul;
+}
+
+function task_to_html(task, currentTaskId){
+    let li = document.createElement("li")
+    let div = document.createElement("div");
+    div.innerHTML = "[" + task.id + "] " + task.text
     div.className = "task"
     li.appendChild(div)
-    if(child.id == currentTaskId){
+    if(task.id == currentTaskId){
         li.style.color = "purple"
         li.className = "current-task"
         li.style.border = "thin solid purple"
-    } else if(child.info.done){
+    } else if(task.info.done){
         tooltip = document.createElement("span")
         tooltip.className = "tooltiptext"
-        tooltip.innerHTML = child.info.closing_notes ? "Closing notes: " + child.info.closing_notes : " - "
+        tooltip.innerHTML = task.info.closing_notes ? "Closing notes: " + task.info.closing_notes : " - "
         div.appendChild(tooltip)
         li.style.color = "green"
     } else {
         li.style.color = "red"
     }
-    li.appendChild (to_ul (child, currentTaskId));
-    ul.appendChild (li);
-  })
-  return ul;
+    return li
+}
+
+/*
+ * Create a unary tree from a path
+ */
+function path_to_ul (obj, currentTaskId) {
+  var i, li, main_ul = document.createElement ("ul");
+    console.log(obj)
+    let first = task_to_html(obj.shift(), currentTaskId)
+    let current = first
+    obj.forEach((step) => {
+        ul = document.createElement("ul")
+        li = task_to_html(step, currentTaskId)
+        ul.appendChild(li)
+        current.appendChild(ul)
+        current = li
+    })
+    main_ul.appendChild(first)
+  return main_ul;
 }
 let updateViews = function(){
     let req = new XMLHttpRequest();
@@ -132,7 +156,7 @@ let updateCurrentTask = function(){
         const resp = JSON.parse(this.responseText)
         currentTaskDiv = document.getElementById('current-task')
         currentTaskDiv.innerHTML = ""
-        currentTaskDiv.appendChild(to_ul({"children": [resp]}, tree.current_task_id))
+        currentTaskDiv.appendChild(path_to_ul(resp, tree.current_task_id))
         // document.getElementById('current-task').innerHTML = resp.term_output;
     };
     req.send();
