@@ -6,6 +6,14 @@ async function periodicUpdates(){
     updateViews()
 }
 
+function authenticate(){
+    password = prompt("Enter the content of ~/.ssh/focustree_token")
+    let req = new XMLHttpRequest();
+    req.open('POST', '../authenticate');
+    req.setRequestHeader("Content-type", "text/text");
+    req.send(password);
+}
+
 function init(){
     fileSelector.addEventListener('change', function() {
         var fr = new FileReader();

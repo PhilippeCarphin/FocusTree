@@ -145,15 +145,49 @@ func FocusTreeServer(port int, host string, file string) error {
 	m.HandleFunc("/fuck_my_face", TheTreeManager.JsonTree).Methods("GET")
 	m.PathPrefix("/simple-client").HandlerFunc(ServeWebApp).Methods("GET")
 	m.HandleFunc("/api/current", TheTreeManager.currentContext).Methods("GET")
+	m.HandleFunc("/authenticate", Authenticate).Methods("POST")
 
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("Starting server on host %s, port %d\n", host, port)
+	fmt.Printf("Visit web client with 'http://%s:%d/simple-client?ftserver_token=%s\n", host, port, TheToken)
 
 	http.Serve(l, m)
 	return nil
+}
+
+func Authenticate(w http.ResponseWriter, r *http.Request) {
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(os.Stderr, "Authenticate: body: '%s'", body)
+	w.Header().Set("Set-Cookie", fmt.Sprintf("ftserver_token=%s;", body))
+	w.WriteHeader(http.StatusOK)
+}
+
+func VerifyCookieRequest(r *http.Request) (bool, error) {
+	cookiesStr := r.Header.Get("Cookie")
+	if cookiesStr == "" {
+		return false, nil
+	}
+	cookies, err := http.ParseCookie(cookiesStr)
+	if err != nil {
+		return false, err
+	}
+	for _, cookie := range cookies {
+		fmt.Printf("Cookie: %#v\n", cookie)
+		if cookie.Name == "ftserver_token" && cookie.Value == TheToken {
+			fmt.Fprintf(os.Stderr, "Cookie authentication SUCCESSFUL\n")
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func rootPath() (string, error) {
@@ -192,6 +226,10 @@ func ServeWebApp(w http.ResponseWriter, r *http.Request) {
 	webAppPath := path.Join(root, "share", "FocusTree", "clients", "basic_js_client")
 	filePath := path.Join(webAppPath, file)
 	fmt.Printf("Serving file %s\n", filePath)
+
+	if r.URL.Query().Get("ftserver_token") == TheToken {
+		w.Header().Set("Set-Cookie", fmt.Sprintf("ftserver_token=%s; Path=/", TheToken))
+	}
 
 	http.ServeFile(w, r, filePath)
 	return
@@ -342,7 +380,14 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Received Token = '%s'\n", strings.Trim(payload.Token, " \n"))
 	fmt.Printf("      TheToken = '%s'\n", TheToken)
 
-	if strings.Trim(payload.Token, " \n") != TheToken {
+	cookieOk, err := VerifyCookieRequest(r)
+	if err != nil {
+		fmt.Printf("Error checking cookie: %v\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if strings.Trim(payload.Token, " \n") != TheToken && !cookieOk {
 		fmt.Println("Unauthorized access attempted")
 
 		var tr = TerminalClientResponse{
