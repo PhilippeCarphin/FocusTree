@@ -8,12 +8,12 @@ import requests
 import focus
 import json
 from termcolor import colored
-from pygments.lexers.shell import BashSessionLexer, BashLexer
+from pygments.lexers.shell import BashLexer
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import Completion, Completer, FuzzyCompleter, FuzzyWordCompleter, WordCompleter
+from prompt_toolkit.completion import Completion, Completer, FuzzyCompleter
 from prompt_toolkit.lexers import PygmentsLexer
-from prompt_toolkit.styles import style_from_pygments_cls, Style
+from prompt_toolkit.styles import Style
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.shortcuts import CompleteStyle
@@ -24,11 +24,14 @@ TOKEN = None
 
 the_tree = None
 
+
 class REPLDoneError(Exception):
     pass
 
+
 class BadServerError(Exception):
     pass
+
 
 def read_command(prompt):
     try:
@@ -36,10 +39,11 @@ def read_command(prompt):
     except EOFError as e:
         raise REPLDoneError("EOF entered")
 
+
 def eval_command(command_line='current'):
     payload = {
-            "command" : command_line if command_line != '' else 'current',
-            "token" : TOKEN,
+            "command": command_line if command_line != '' else 'current',
+            "token": TOKEN,
     }
     words = command_line.split()
     operation = words[0]
@@ -50,11 +54,11 @@ def eval_command(command_line='current'):
             resp = save_org_command(''.join(words[1:]), the_tree)
         elif operation == 'clear':
             os.system('clear')
-            resp = {'status':0, 'term_output': ''}
+            resp = {'status': 0, 'term_output': ''}
         elif operation == 'save-file':
             the_tree = get_tree()
             the_tree.save_to_file(words[1])
-            resp = {'status':0, 'term_output': ''}
+            resp = {'status': 0, 'term_output': ''}
         elif operation == 'send-file':
             request_url = f'http://{args.host}:{args.port}/api/send-tree'
             tree = focus.TreeManager.load_from_file(words[1])
@@ -65,16 +69,18 @@ def eval_command(command_line='current'):
             for name, obj in focus.commands.items():
                 print(f"<tr><td>{name}</td><td>{obj['help']}</td></tr>")
             print("</table>")
-            resp = {'status':0, 'term_output': ''}
+            resp = {'status': 0, 'term_output': ''}
     else:
         request_url = f'http://{args.host}:{args.port}/api/send-command'
         resp = requests.post(request_url, data=bytes(json.dumps(payload), 'utf-8')).json()
     return resp
 
+
 def print_output(resp):
     if resp['status'] != 0:
         print(colored('ERROR : ' + str(resp['error']), 'red'))
     print(resp['term_output'])
+
 
 def loop(prompt_sesh):
     try:
@@ -99,8 +105,8 @@ def REPL():
         except REPLDoneError:
             break
 
+
 def make_prompt_session():
-    commands = focus.commands
     class CustomComplete(Completer):
         def get_completions(self, document, complete_event):
             word = document.get_word_before_cursor()
@@ -115,52 +121,41 @@ def make_prompt_session():
                     tasks = filter(lambda n: not n.done, tasks)
                 # tasks = sorted(tasks, key=lambda n: n.id)
                 tasks = filter(lambda n: str(n.id).startswith(word), tasks)
-                to_completion = lambda n: Completion(
-                        str(n.id),
-                        display=f'{n.id} : {n.text}',
-                        start_position=-len(word))
-                yield from map(to_completion, tasks)
+
+                yield from map(
+                    lambda task: Completion(
+                        str(task.id),
+                        display=f'{task.id} : {task.text}',
+                        start_position=-len(word)),
+                    tasks
+                )
             else:
                 if len(complete_words) >= 1:
                     return
-                to_completion = lambda c : Completion(
+                cmds = filter(lambda c: c.startswith(word), focus.commands.keys())
+                yield from map(
+                    lambda c: Completion(
                         c,
                         display=f"{c} : {focus.commands[c]['help']}",
-                        start_position=-len(word))
-                cmds = filter(lambda c: c.startswith(word), focus.commands.keys())
-                yield from map(to_completion, cmds)
+                        start_position=-len(word)),
+                    cmds
+                )
 
     ft_completer = FuzzyCompleter(CustomComplete())
-    # This if I want the help to be displayed
     ft_completer = CustomComplete()
-    ####################################################################################
-    # commands = focus.commands
-    # meta_dict = {c : commands[c]['help'] for c in commands}
-    # #print(meta_dict)
-    # ft_completer = WordCompleter(focus.commands, meta_dict=meta_dict)
     prompt_style = Style.from_dict({
         'prompt': '#00aa00'
     })
-    prompt_string = [
-        ('class:username', 'FocusTree> ')
-    ]
+
     bindings = KeyBindings()
+
     @bindings.add('c-j')
     def _(event):
         event.current_buffer.complete_next()
+
     @bindings.add('c-k')
     def _(event):
         event.current_buffer.complete_previous()
-    # @bindings.add('tab')
-    # def _(event):
-    #     # THIS IS THE GETTO-EST THING EVER, DON'T JUDGE ME!
-    #     # I just want it to select the currently highlighted
-    #     # completion.  It could continue completing after.
-    #     current_buffer = event.app.current_buffer
-    #     compl = current_buffer.text
-    #     current_buffer.cancel_completion()
-    #     current_buffer.text = ''
-    #     current_buffer.insert_text(compl + ' ')
 
     prompt_sesh = PromptSession(
         history=FileHistory(os.path.expanduser('~/.focus_tree_history')),
@@ -172,10 +167,12 @@ def make_prompt_session():
         style=prompt_style,
         complete_style=CompleteStyle.COLUMN
     )
+
     def prompt():
         return prompt_sesh.prompt([('class:username', 'FocusTree> ')])
 
     return prompt
+
 
 def get_tree():
     request_url = f'http://{args.host}:{args.port}/api/tree'
@@ -185,6 +182,7 @@ def get_tree():
         e.response = resp
         raise e
     return focus.TreeManager.from_dict(resp.json())
+
 
 def save_org_command(filename, tree):
     with open(filename, 'w+') as f:
@@ -208,26 +206,25 @@ def execute(args):
     except requests.exceptions.ConnectionError as e:
         print(f'Could not connect to ftserver : {e}')
 
+
 class ServerProcess:
     def __init__(self, args):
         self.args = args
+
     def __enter__(self):
         self.process = subprocess.Popen(
             f'ftserver --port {args.port} --host {args.host}',
             shell=True,
             stderr=subprocess.DEVNULL,
         )
+
     def __exit__(self, type, value, traceback):
         self.process.terminate()
 
+
 if __name__ == "__main__":
-
     args = get_args()
-
-    print("FocusTree client using http://{}:{}"
-              .format(args.host, args.port))
-
-    home = os.environ['HOME']
+    print(f"FocusTree client using http://{args.host}:{args.port}")
     if 'http_proxy' in os.environ:
         print(f"{os.path.basename(sys.argv[0])}: \033[33mWARNING\033[0m: Unsetting environment variable 'http_proxy'")
         del os.environ['http_proxy']
@@ -235,16 +232,15 @@ if __name__ == "__main__":
         print(f"{os.path.basename(sys.argv[0])}: \033[33mWARNING\033[0m: Unsetting environment variable 'HTTP_PROXY'")
         del os.environ['HTTP_PROXY']
     with open(os.path.expanduser('~/.ssh/ftserver_token')) as f:
-        TOKEN = f.read().strip() # Just the actual key
+        TOKEN = f.read().strip()  # Just the actual key
     print(TOKEN)
 
     try:
-        # There is already a server running
         get_tree()
     except BadServerError as e:
         print(f"{os.path.basename(sys.argv[0])}: \033[1;31mERROR\033[0m: ({type(e).__name__}) {e}")
         sys.exit(1)
-    except requests.exceptions.ConnectionError as e:
+    except requests.exceptions.ConnectionError:
         print(f'No server running on {args.host}:{args.port}, starting manually on ...')
         with ServerProcess(args):
             # With sleep(0.1), the server isn't ready when we try to connect to it.
