@@ -190,6 +190,10 @@ func VerifyCookieRequest(r *http.Request) (bool, error) {
 }
 
 func rootPath() (string, error) {
+	// In installed situation, the execuable is in ${root}/bin and the root
+	// is $(cd $(dirname $0)/.. && pwd), and in the build situation, assuming
+	// a build directory inside the source dir, this same code will give the
+	// source directory.  So we will reach the client as well.
 	ex, err := os.Executable()
 	if err != nil {
 		return "", err
