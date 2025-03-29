@@ -97,8 +97,8 @@ def loop(prompt_sesh):
 
 def REPL():
     prompt = make_prompt_session()
-    r = eval_command('current')
-    print(r['term_output'])
+    resp = eval_command('current')
+    print(resp['term_output'])
     while True:
         try:
             loop(prompt)
@@ -196,7 +196,28 @@ def save_org_command(filename, tree):
     }
 
 
-def execute(args):
+def ensure_no_proxy():
+    if 'http_proxy' in os.environ:
+        print(f"{os.path.basename(sys.argv[0])}: \033[33mWARNING\033[0m: Unsetting environment variable 'http_proxy'")
+        del os.environ['http_proxy']
+    if 'HTTP_PROXY' in os.environ:
+        print(f"{os.path.basename(sys.argv[0])}: \033[33mWARNING\033[0m: Unsetting environment variable 'HTTP_PROXY'")
+        del os.environ['HTTP_PROXY']
+
+
+def read_token():
+    global TOKEN
+    with open(os.path.expanduser('~/.ssh/ftserver_token')) as f:
+        TOKEN = f.read().strip()  # Just the actual key
+    print(f"Value of authentication token: {TOKEN}")
+
+
+if __name__ == "__main__":
+    args = get_args()
+    print(f"FocusTree client using http://{args.host}:{args.port}")
+    ensure_no_proxy()
+    read_token()
+
     try:
         if args.ft_command:
             resp = eval_command(' '.join(args.ft_command))
@@ -205,46 +226,3 @@ def execute(args):
             REPL()
     except requests.exceptions.ConnectionError as e:
         print(f'Could not connect to ftserver : {e}')
-
-
-class ServerProcess:
-    def __init__(self, args):
-        self.args = args
-
-    def __enter__(self):
-        self.process = subprocess.Popen(
-            f'ftserver --port {args.port} --host {args.host}',
-            shell=True,
-            stderr=subprocess.DEVNULL,
-        )
-
-    def __exit__(self, type, value, traceback):
-        self.process.terminate()
-
-
-if __name__ == "__main__":
-    args = get_args()
-    print(f"FocusTree client using http://{args.host}:{args.port}")
-    if 'http_proxy' in os.environ:
-        print(f"{os.path.basename(sys.argv[0])}: \033[33mWARNING\033[0m: Unsetting environment variable 'http_proxy'")
-        del os.environ['http_proxy']
-    if 'HTTP_PROXY' in os.environ:
-        print(f"{os.path.basename(sys.argv[0])}: \033[33mWARNING\033[0m: Unsetting environment variable 'HTTP_PROXY'")
-        del os.environ['HTTP_PROXY']
-    with open(os.path.expanduser('~/.ssh/ftserver_token')) as f:
-        TOKEN = f.read().strip()  # Just the actual key
-    print(TOKEN)
-
-    try:
-        get_tree()
-    except BadServerError as e:
-        print(f"{os.path.basename(sys.argv[0])}: \033[1;31mERROR\033[0m: ({type(e).__name__}) {e}")
-        sys.exit(1)
-    except requests.exceptions.ConnectionError:
-        print(f'No server running on {args.host}:{args.port}, starting manually on ...')
-        with ServerProcess(args):
-            # With sleep(0.1), the server isn't ready when we try to connect to it.
-            time.sleep(1)
-            execute(args)
-    else:
-        execute(args)
