@@ -72,7 +72,10 @@ def eval_command(command_line='current'):
             resp = {'status': 0, 'term_output': ''}
     else:
         request_url = f'http://{args.host}:{args.port}/api/send-command'
-        resp = requests.post(request_url, data=bytes(json.dumps(payload), 'utf-8')).json()
+        resp = requests.post(request_url, data=bytes(json.dumps(payload), 'utf-8'))
+        if resp.status_code != 200:
+            raise RuntimeError(f"send-command response code: {resp.status_code}")
+        resp = resp.json()
     return resp
 
 
