@@ -6,15 +6,14 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"os/exec"
 )
 
 var TheTreeManager *TreeManager = nil
@@ -24,14 +23,14 @@ var TheToken string = "1234"
 var TreeNodeIdCounter = 0
 
 type TreeNode struct {
-	Text     string       `json:"text"`
-	Id       int          `json:"id"`
-	Info     TreeNodeInfo `json:"info"`
-	Children []*TreeNode  `json:"children"`
-	Parent   *TreeNode    `json:"-"` // Must be ignored for JSON or cycles get created
-	Depth    int          `json:"-"`
-	Manager  *TreeManager `json:"-"`
-	IsAncestorOfCurrent bool `json:"-"`
+	Text                string       `json:"text"`
+	Id                  int          `json:"id"`
+	Info                TreeNodeInfo `json:"info"`
+	Children            []*TreeNode  `json:"children"`
+	Parent              *TreeNode    `json:"-"` // Must be ignored for JSON or cycles get created
+	Depth               int          `json:"-"`
+	Manager             *TreeManager `json:"-"`
+	IsAncestorOfCurrent bool         `json:"-"`
 }
 
 type TreeNodeInfo struct {
@@ -87,7 +86,7 @@ func FindFocusTree(port int) (*TreeManager, error) {
 	file := path.Join(home, base)
 	fmt.Printf("Using file from '%s' from home directory\n", file)
 
-	if _, err:= os.Stat(file) ; errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(file); errors.Is(err, os.ErrNotExist) {
 		tm := NewTreeManager()
 		tm.File = file
 		tm.ToFile()
@@ -125,17 +124,8 @@ func FocusTreeServer(port int, host string, file string) error {
 	if err != nil {
 		return fmt.Errorf("Could not get auth token from file '%s': %v", tokenFile, err)
 	}
-
-	// TheToken = string(content)
 	TheToken = strings.Trim(string(content), " \n")
 	fmt.Printf("The token is '%s'\n", TheToken)
-
-	// content, err := os.ReadFile(fmt.Sprintf("%s/.ssh/id_rsa.pub", userDir))
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// words := strings.Split(string(content), " ")
-	// TheToken = words[1]
 
 	m := mux.NewRouter()
 	m.HandleFunc("/", TheTreeManager.sendTree).Methods("GET")
@@ -235,30 +225,6 @@ func ServeWebApp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeFile(w, r, filePath)
-	return
-	fmt.Printf("file to send back: %s\n", filePath)
-	fileBytes, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	h := w.Header()
-	switch file {
-	case "/index.html":
-		h.Set("Content-Type", "text/html")
-	case "/main.js":
-		h.Set("Content-Type", "text/javascript")
-	case "/styles.css":
-		h.Set("Content-Type", "text/css")
-	default:
-		h.Set("Content-Type", "text/html")
-		w.Write([]byte("Unknown file"))
-		return
-	}
-	w.Write(fileBytes)
 }
 
 func (tm *TreeManager) sendTree(w http.ResponseWriter, r *http.Request) {
@@ -407,7 +373,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Println(err)
 		}
-
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(j)
 
 		return
@@ -535,8 +501,8 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 			tr.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
 			break
 		}
-		tr.TermOutput = fmt.Sprintf("Info on task %d - \033[1;37m%s\033[0m: \n\tDone: %t,\n\tClosingNotes: %s\n", id, n.Text,  n.Info.Done, n.Info.ClosingNotes)
-        case "not-done":
+		tr.TermOutput = fmt.Sprintf("Info on task %d - \033[1;37m%s\033[0m: \n\tDone: %t,\n\tClosingNotes: %s\n", id, n.Text, n.Info.Done, n.Info.ClosingNotes)
+	case "not-done":
 		if tm.Current == nil {
 			tr.Status = 1
 			tr.Error = fmt.Sprintf("No current task")
@@ -856,23 +822,18 @@ func NodeFromJSON(b []byte) (*TreeNode, error) {
 // }
 
 func (n *TreeNode) FindSubtaskById(id int) *TreeNode {
-
 	if n.Id == id {
 		return n
 	}
 
 	for _, c := range n.Children {
-
 		cId := c.FindSubtaskById(id)
-
 		if cId != nil {
 			return cId
 		}
-
 	}
 
 	return nil
-
 }
 
 func (n *TreeNode) Ancestors() []*TreeNode {
@@ -907,13 +868,13 @@ func (n *TreeNode) String() string {
 
 func (tm *TreeManager) ChangeCurrent(newCurrent *TreeNode) {
 	if tm.Current != nil {
-		for cursor := tm.Current ; cursor != nil ; cursor = cursor.Parent {
+		for cursor := tm.Current; cursor != nil; cursor = cursor.Parent {
 			cursor.IsAncestorOfCurrent = false
 		}
 	}
 	tm.Current = newCurrent
 	tm.CurrentTaskId = newCurrent.Id
-	for cursor := tm.Current ; cursor != nil ; cursor = cursor.Parent {
+	for cursor := tm.Current; cursor != nil; cursor = cursor.Parent {
 		cursor.IsAncestorOfCurrent = true
 	}
 }
