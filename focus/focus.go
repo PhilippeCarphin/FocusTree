@@ -366,6 +366,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	switch command {
 	case "reset":
 		tm.Reset()
+		tm.ReassignIds()
 		tr.TermOutput = "No current task\n" + tm.PrintableTree("")
 
 	case "current":
