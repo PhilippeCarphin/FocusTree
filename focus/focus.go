@@ -275,7 +275,7 @@ func (tm *TreeManager) FindIncompleteFromCurrent() (*TreeNode, error) {
 		fmt.Printf("FindIncompleteFromCurrent() Examining parent of current : %v\n", c)
 		u, err := c.FindIncompleteChild()
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		if u != nil {
 			fmt.Printf("FindIncompleteFromCurrent() Setting current node to %v\n", u)
@@ -289,7 +289,7 @@ func (tm *TreeManager) FindIncompleteFromCurrent() (*TreeNode, error) {
 		fmt.Println(r.Text)
 		u, err := r.FindIncompleteChild()
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		if u != nil {
 			fmt.Printf("FindIncompleteFromCurrent() Setting current node to %v\n", u)
@@ -487,14 +487,12 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	case "subtask-by-id":
 		var id int
 		nbRead, err := fmt.Sscanf(args[0], "%d", &id)
-		if err != nil {
-			panic(err)
-		}
-		if nbRead == 0 {
-			panic("No bytes read")
+		if err != nil || nbRead == 0 {
+			tr.Error = fmt.Sprintf("Could not convert '%s' to integer Id", args[0])
+			tr.Status = 1
+			break
 		}
 		n := tm.FindSubtaskById(id)
-
 		t := NewTreeNode()
 		t.Text = strings.Join(args[1:], " ")
 		n.AddChild(t)
@@ -512,7 +510,9 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 		tm.Current, err = tm.FindIncompleteFromCurrent()
 		if err != nil {
-			panic(err)
+			tr.Error = fmt.Sprintf("ERROR finding incomplete task: %v", err)
+			tr.Status = 1
+			break
 		}
 		if tm.Current == nil {
 			tr.TermOutput = "No current task"
