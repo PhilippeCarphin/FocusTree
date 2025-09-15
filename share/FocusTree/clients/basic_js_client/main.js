@@ -50,7 +50,6 @@ let sendCommand = function(){
     command = document.getElementById('command')
     obj = {
         "command": command.value,
-        "args": "",
         "token": ftserver_token,
         "html": true
     }
