@@ -1,6 +1,7 @@
 import datetime
 import json
 import sys
+import io
 from termcolor import colored
 
 class FocusTreeException(Exception):
@@ -72,18 +73,26 @@ class TreeNode:
             node.add_child(TreeNode.from_dict(c))
         return node
 
-    def to_org(self, starting_depth=1):
+    def to_org(self, starting_depth=1, stream=None):
+        if stream is None:
+            stream = io.StringIO()
+
         """Create an org-mode text representation of the tree of this Node
         This is for saving an org-mode report"""
         self.update_depth()
         org_todo_keyword = 'DONE' if self.done else 'TODO'
         stars = '\n' + '*'*(self.depth + starting_depth)
-        output = stars + ' ' + org_todo_keyword + ' ' + self.text + '\n'
-        output += 'created_on : ' + self.created_on + '\n'
-        output += 'closing_notes : ' + str(self.closing_notes) + '\n'
-        output += 'finished_on : ' + str( self.finished_on ) + '\n'
-        output += '\n'.join([c.to_org(starting_depth) for c in self.children])
-        return output
+        stream.write(stars + ' ' + org_todo_keyword + ' ' + self.text + '\n')
+        if self.created_on:
+            stream.write('created_on : ' + self.created_on + '\n')
+        if self.closing_notes:
+            stream.write('closing_notes : ' + str(self.closing_notes) + '\n')
+        if self.finished_on:
+            stream.write('finished_on : ' + str( self.finished_on ) + '\n')
+
+        for c in self.children:
+            c.to_org(starting_depth, stream)
+        return stream
 
     def update_depth(self):
         """Set the depth of this node"""
@@ -299,10 +308,15 @@ class TreeManager:
         tm.current_task = tm.find_task_by_id(d["current_task_id"])
         return tm
 
-    def to_org(self, starting_depth=1):
+    def to_org(self, starting_depth=1, stream=None):
         """Create an org-mode file with the tree."""
-        title = '#+TITLE: FocusTree exported on{}\n\n'.format(datetime.datetime.now())
-        return title + ''.join([r.to_org(starting_depth) for r in self.root_nodes])
+        if stream is None:
+            stream = io.StringIO()
+        stream.write('#+TITLE: FocusTree exported on{}\n\n'.format(datetime.datetime.now()))
+        for r in self.root_nodes:
+            r.to_org(starting_depth, stream)
+
+        return stream
 
     def find_task_by_id(self, id):
         """Depth first searches for the first leaf task it can find and sets it

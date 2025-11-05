@@ -188,8 +188,10 @@ def get_tree():
 
 
 def save_org_command(filename, tree):
+    if not filename.endswith('.org'):
+        filename += '.org'
     with open(filename, 'w+') as f:
-        f.write(tree.to_org())
+        tree.to_org(1,f)
     return {
         'command': 'save-org ' + filename,
         'status': 0,

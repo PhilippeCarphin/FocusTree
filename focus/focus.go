@@ -48,6 +48,20 @@ type TreeManager struct {
 	moveStack     []*TreeNode `json:"-"`
 }
 
+type CommandRequest struct {
+	Command string
+	Token   string
+	Html    bool
+}
+
+type CommandResponse struct {
+	Error      string `json:"error"`
+	TermOutput string `json:"term_output"`
+	Command    string `json:"command"`
+	Status     int    `json:"status"`
+}
+
+
 func NewTreeManager() *TreeManager {
 	return &TreeManager{
 		RootNodes: make([]*TreeNode, 0),
@@ -61,12 +75,14 @@ func DefaultFileName(port int) string {
 
 func FindFocusTree(port int) (*TreeManager, error) {
 	d, err := os.Getwd()
+	fmt.Fprintf(os.Stderr, "Locating focustree file starting at %s\n", d);
 	base := DefaultFileName(port)
 	if err != nil {
 		return nil, fmt.Errorf("Could not get cwd: %v", err)
 	}
 	for ; ; d = path.Dir(d) {
 		file := path.Join(d, base)
+		fmt.Fprintf(os.Stderr, "... trying file %s\n", file);
 		t, err := TreeManagerFromFile(file)
 		if err == nil {
 			fmt.Printf("Using tree file '%s' found from directory search\n", file)
@@ -94,7 +110,7 @@ func FindFocusTree(port int) (*TreeManager, error) {
 	return TreeManagerFromFile(file)
 }
 
-func FocusTreeServer(port int, host string, file string) error {
+func FocusTreeServer(port int, host string, file string, search bool) error {
 	if file == "" {
 		t, err := FindFocusTree(port)
 		if err != nil {
@@ -260,13 +276,6 @@ func (tm *TreeManager) currentContext(w http.ResponseWriter, r *http.Request) {
 	w.Write(p)
 }
 
-type TerminalClientResponse struct {
-	Error      string `json:"error"`
-	TermOutput string `json:"term_output"`
-	Command    string `json:"command"`
-	Status     int    `json:"status"`
-}
-
 func (tm *TreeManager) FindIncompleteFromCurrent() (*TreeNode, error) {
 
 	c := tm.Current
@@ -308,12 +317,6 @@ func (tm *TreeManager) Reset() error {
 	return nil
 }
 
-type FtclientPayload struct {
-	Command string
-	Token   string
-	Html    bool
-}
-
 func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
@@ -321,7 +324,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Error getting body of request : %v", err)
 	}
 
-	var payload FtclientPayload
+	var payload CommandRequest
 	json.Unmarshal(body, &payload)
 	fmt.Printf("Received Token = '%s'\n", strings.Trim(payload.Token, " \n"))
 	fmt.Printf("      TheToken = '%s'\n", TheToken)
@@ -336,13 +339,11 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	if strings.Trim(payload.Token, " \n") != TheToken && !cookieOk {
 		fmt.Println("Unauthorized access attempted")
 
-		var tr = TerminalClientResponse{
+		j, err := json.Marshal(CommandResponse{
 			Status:  1,
 			Command: string(body),
 			Error:   "Access denied your token does not match server token",
-		}
-
-		j, err := json.Marshal(tr)
+		})
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -359,7 +360,7 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	args := words[1:]
 	fmt.Printf("handleCommand(): Comand : %s, Args : %s (len(args): %d)\n", command, args, len(args))
 
-	var tr = TerminalClientResponse{
+	var resp = CommandResponse{
 		Status:  0,
 		Command: string(body),
 	}
@@ -367,16 +368,16 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 	case "reset":
 		tm.Reset()
 		tm.ReassignIds()
-		tr.TermOutput = "No current task\n" + tm.PrintableTree("")
+		resp.TermOutput = "No current task\n" + tm.PrintableTree("")
 
 	case "current":
 		if tm.Current == nil {
-			tr.TermOutput = "No current task\n" + tm.PrintableTree("")
+			resp.TermOutput = "No current task\n" + tm.PrintableTree("")
 		} else {
-			tr.TermOutput = tm.Current.PrintableAncestors()
+			resp.TermOutput = tm.Current.PrintableAncestors()
 		}
 	case "tree":
-		tr.TermOutput = tm.PrintableTree("")
+		resp.TermOutput = tm.PrintableTree("")
 	case "subtask":
 		t := NewTreeNode()
 		t.Text = strings.Join(args, " ")
@@ -387,14 +388,14 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		}
 		tm.ChangeCurrent(t)
 
-		tr.TermOutput = tm.Current.PrintableAncestors()
+		resp.TermOutput = tm.Current.PrintableAncestors()
 	case "new-task", "new":
 		t := NewTreeNode()
 		t.Text = strings.Join(args, " ")
 
 		tm.AddRootNode(t)
 
-		tr.TermOutput = tm.PrintableTree("")
+		resp.TermOutput = tm.PrintableTree("")
 	case "next-task", "next":
 		t := NewTreeNode()
 		t.Text = strings.Join(args, " ")
@@ -405,57 +406,57 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 			tm.Current.Parent.AddChild(t)
 		}
 
-		tr.TermOutput = tm.PrintableTree("")
+		resp.TermOutput = tm.PrintableTree("")
 	case "switch-task":
 		if len(args) == 0 || args[0] == "" {
-			tr.Status = 1
-			tr.Error = "Command requires ID as argument"
+			resp.Status = 1
+			resp.Error = "Command requires ID as argument"
 			break
 		}
 
 		id64, err := strconv.ParseInt(args[0], 0, 0)
 		if err != nil {
-			tr.Status = 1
-			tr.Error = fmt.Sprintf("Could not parse numeric ID from '%s': %v", args[0], err)
+			resp.Status = 1
+			resp.Error = fmt.Sprintf("Could not parse numeric ID from '%s': %v", args[0], err)
 			break
 		}
 		id := int(id64)
 
 		n := tm.FindSubtaskById(id)
 		if n == nil {
-			tr.Status = 1
-			tr.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
+			resp.Status = 1
+			resp.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
 			break
 		}
 		tm.ChangeCurrent(n)
 		fmt.Printf("Set current task by ID to %s\n", n)
 	case "delete-task", "delete":
 		if len(args) == 0 || args[0] == "" {
-			tr.Status = 1
-			tr.Error = "Command requires ID as argument"
+			resp.Status = 1
+			resp.Error = "Command requires ID as argument"
 			break
 		}
 
 		id64, err := strconv.ParseInt(args[0], 0, 0)
 		if err != nil {
-			tr.Status = 1
-			tr.Error = fmt.Sprintf("Could not parse numeric ID from '%s': %v", args[0], err)
+			resp.Status = 1
+			resp.Error = fmt.Sprintf("Could not parse numeric ID from '%s': %v", args[0], err)
 			break
 		}
 		id := int(id64)
 
 		n := tm.FindSubtaskById(id)
 		if n == nil {
-			tr.Status = 1
-			tr.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
+			resp.Status = 1
+			resp.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
 			break
 		}
 		err = tm.DeleteTaskById(id)
 		if err != nil {
-			tr.Error = fmt.Sprintf("%v", err)
-			tr.Status = 1
+			resp.Error = fmt.Sprintf("%v", err)
+			resp.Status = 1
 		}
-		tr.TermOutput = fmt.Sprintf("Deleted task with id %d: '%s'", id, n.Text)
+		resp.TermOutput = fmt.Sprintf("Deleted task with id %d: '%s'", id, n.Text)
 	case "info":
 		var id int
 		if len(args) == 0 {
@@ -463,46 +464,47 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		} else {
 			id64, err := strconv.ParseInt(args[0], 0, 0)
 			if err != nil {
-				tr.Status = 1
-				tr.Error = fmt.Sprintf("Could not parse numeric ID from '%s': %v", args[0], err)
+				resp.Status = 1
+				resp.Error = fmt.Sprintf("Could not parse numeric ID from '%s': %v", args[0], err)
 				break
 			}
 			id = int(id64)
 		}
 		n := tm.FindSubtaskById(id)
 		if n == nil {
-			tr.Status = 1
-			tr.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
+			resp.Status = 1
+			resp.Error = fmt.Sprintf("Could not find node with ID '%d'", id)
 			break
 		}
-		tr.TermOutput = fmt.Sprintf("Info on task %d - \033[1;37m%s\033[0m: \n\tDone: %t,\n\tClosingNotes: %s\n", id, n.Text, n.Info.Done, n.Info.ClosingNotes)
+		resp.TermOutput = fmt.Sprintf("Info on task %d - \033[1;37m%s\033[0m: \n\tDone: %t,\n\tClosingNotes: %s\n", id, n.Text, n.Info.Done, n.Info.ClosingNotes)
 	case "not-done":
 		if tm.Current == nil {
-			tr.Status = 1
-			tr.Error = fmt.Sprintf("No current task")
+			resp.Status = 1
+			resp.Error = fmt.Sprintf("No current task")
 			break
 		}
 		tm.Current.Info.Done = false
-		tr.Status = 0
-		tr.TermOutput = fmt.Sprintf("Marked current task as Not Done")
+		resp.Status = 0
+		resp.TermOutput = fmt.Sprintf("Marked current task as Not Done")
 	case "subtask-by-id":
 		var id int
 		nbRead, err := fmt.Sscanf(args[0], "%d", &id)
 		if err != nil || nbRead == 0 {
-			tr.Error = fmt.Sprintf("Could not convert '%s' to integer Id", args[0])
-			tr.Status = 1
+			resp.Error = fmt.Sprintf("Could not convert '%s' to integer Id", args[0])
+			resp.Status = 1
 			break
 		}
 		n := tm.FindSubtaskById(id)
 		t := NewTreeNode()
 		t.Text = strings.Join(args[1:], " ")
 		n.AddChild(t)
-		tr.TermOutput = tm.PrintableTree("")
+		resp.TermOutput = tm.PrintableTree("")
 	case "done":
+
 		if tm.Current == nil {
-			tr.TermOutput = "No current task"
-			tr.Status = 1
-			tr.Error = "No current task to mark done"
+			resp.TermOutput = "No current task"
+			resp.Status = 1
+			resp.Error = "No current task to mark done"
 			break
 		}
 
@@ -511,35 +513,35 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 		tm.Current, err = tm.FindIncompleteFromCurrent()
 		if err != nil {
-			tr.Error = fmt.Sprintf("ERROR finding incomplete task: %v", err)
-			tr.Status = 1
+			resp.Error = fmt.Sprintf("ERROR finding incomplete task: %v", err)
+			resp.Status = 1
 			break
 		}
 		if tm.Current == nil {
-			tr.TermOutput = "No current task"
+			resp.TermOutput = "No current task"
 		} else {
-			tr.TermOutput = tm.Current.PrintableAncestors()
+			resp.TermOutput = tm.Current.PrintableAncestors()
 		}
 	case "reassign-ids":
 		tm.ReassignIds()
 	default:
-		tr.TermOutput = ""
-		tr.Error = fmt.Sprintf("(goftserver) Unknown command %s", string(body))
-		tr.Status = 1
+		resp.TermOutput = ""
+		resp.Error = fmt.Sprintf("(goftserver) Unknown command '%s' (args: '%s')", command, args)
+		resp.Status = 1
 		fmt.Println(string(body))
 	}
 
 	if payload.Html {
-		html, err := ansiToHtml(tr.TermOutput)
+		html, err := ansiToHtml(resp.TermOutput)
 		if err == nil {
-			tr.TermOutput = html
+			resp.TermOutput = html
 		} else {
 			fmt.Fprintf(os.Stderr, "Could not convert TermOutput to html: %v", err)
-			tr.Error = fmt.Sprintf("Failed to convert output to HTML: %v", err)
+			resp.Error = fmt.Sprintf("Failed to convert output to HTML: %v", err)
 		}
 	}
 
-	j, err := json.Marshal(tr)
+	j, err := json.Marshal(resp)
 	if err != nil {
 		fmt.Println(err)
 	}
