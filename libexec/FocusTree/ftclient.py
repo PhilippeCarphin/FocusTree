@@ -231,3 +231,4 @@ if __name__ == "__main__":
             REPL()
     except requests.exceptions.ConnectionError as e:
         print(f'Could not connect to ftserver : {e}')
+        sys.exit(1)
