@@ -32,7 +32,7 @@ def fs_parent_search(filename):
 
     return None
 
-def command_line_parser():
+def get_cl_args():
     p = argparse.ArgumentParser()
     p.add_argument("-p", "--port", type=int, help="Port of the server")
     p.add_argument("--host", help="Address of the server")
@@ -48,40 +48,63 @@ def command_line_parser():
     return args
 
 def get_args(look_for_config_file=True):
-    cl_opts = command_line_parser()
+    args = get_cl_args()
     if look_for_config_file:
         config = read_config_file()
     else:
         config = None
 
     if config:
-        cl_opts.config_file = config['config_file']
+        args.config_file = config['config_file']
 
     def get_value(key, default=None, t=str):
         env_var = 'FOCUS_TREE_' + key.upper()
         if config and key in config:
-            if cl_opts.verbose:
+            if args.verbose:
                 print(colored('Getting {} from from config file {}'
                               .format(key, config['config_file']), 'yellow'))
             return t(config[key])
         elif env_var in os.environ:
-            if cl_opts.verbose:
+            if args.verbose:
                 print(colored('Getting {} from from environment variable {}'
                               .format(key, env_var), 'yellow'))
             return t(os.environ[env_var])
         else:
-            if cl_opts.verbose:
+            if args.verbose:
                 print(colored('Getting {} from hardcoded value {}'
                               .format(key, default), 'yellow'))
             return default
 
-    if not cl_opts.port:
-        cl_opts.port = get_value('port', 5051, int)
-    if not cl_opts.host:
-        cl_opts.host = get_value('host', 'localhost')
+    if not args.port and not args.save_file:
+        local_file = upfind_focustree_file()
+        if local_file:
+            import re
+            m = re.match(r"\.focustree\.save\.([^.]*)(\.json)?", local_file.name)
+            if m:
+                args.port = m.group(1)
 
-    return cl_opts
+    if not args.port:
+        args.port = get_value('port', 5051, int)
+    if not args.host:
+        args.host = get_value('host', 'localhost')
 
+    return args
+
+def upfind_focustree_file():
+    import pathlib
+    p = pathlib.Path(os.getcwd())
+    for pp in [p, *p.parents]:
+        g = sorted(list(pp.glob('.focustree.save*')))
+        if g:
+            found_p = pp
+            print(g)
+            break
+    else:
+        return None
+    if len(g) > 1:
+        bases = [x.name for x in g]
+        print(f"WARNING: Multiple .focustree.save.* found in {found_p}: {bases}")
+    return g[0]
 
 def write_config(config, directory):
     with open(os.path.join(directory, FT_CONFIG_FILE_NAME), 'w+') as f:

@@ -216,8 +216,10 @@ def read_token():
         TOKEN = f.read().strip()  # Just the actual key
     print(f"Value of authentication token: {TOKEN}")
 
-
 if __name__ == "__main__":
+    # p.add_argument("-p", "--port", type=int, help="Port of the server")
+    # p.add_argument("--host", help="Address of the server")
+    # p.add_argument("--save-file", help="Save file for the tree")
     args = get_args()
     print(f"FocusTree client using http://{args.host}:{args.port}")
     ensure_no_proxy()

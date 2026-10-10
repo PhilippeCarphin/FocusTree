@@ -1,8 +1,8 @@
 package focus
 
 import (
+	"regexp"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
@@ -73,20 +73,42 @@ func DefaultFileName(port int) string {
 	return fmt.Sprintf(".focustree.save.%d.json", port)
 }
 
-func FindFocusTree(port int) (*TreeManager, error) {
+func FindFocusTreeFileInDir(dir string) (file string, port int, err error) {
+	contents, err := os.ReadDir(dir)
+	if err != nil {
+		return "", 0, err
+	}
+	for _,dirent := range contents {
+		if ! dirent.Type().IsRegular() {
+			continue
+		}
+		re := regexp.MustCompile(`\.focustree\.save\.([^.]*)(\.json)?`)
+		match := re.FindStringSubmatch(dirent.Name())
+		if len(match) > 1 {
+			port64, err := strconv.ParseInt(match[1], 10, 32)
+			if err != nil {
+				return "", 0, err
+			}
+			port = int(port64)
+			file = fmt.Sprintf("%s/%s", dir, dirent.Name())
+			fmt.Fprintf(os.Stderr, "--> Found file '%s'\n", file)
+			return file, port, nil
+		}
+	}
+	return "", 0, nil
+}
+func FindFocusTree() (file string, port int, err error) {
 	d, err := os.Getwd()
 	fmt.Fprintf(os.Stderr, "Locating focustree file starting at %s\n", d);
-	base := DefaultFileName(port)
 	if err != nil {
-		return nil, fmt.Errorf("Could not get cwd: %v", err)
+		return "", 0, fmt.Errorf("Could not get cwd: %v", err)
 	}
 	for ; ; d = path.Dir(d) {
-		file := path.Join(d, base)
-		fmt.Fprintf(os.Stderr, "... trying file %s\n", file);
-		t, err := TreeManagerFromFile(file)
-		if err == nil {
-			fmt.Printf("Using tree file '%s' found from directory search\n", file)
-			return t, nil
+		fmt.Fprintf(os.Stderr, "... trying directory %s\n", d);
+		file, port, err = FindFocusTreeFileInDir(d)
+
+		if file != "" {
+			return file, port, err
 		}
 
 		if d == "" || d == "/" {
@@ -97,33 +119,29 @@ func FindFocusTree(port int) (*TreeManager, error) {
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, fmt.Errorf("Could not get user home: %v", err)
+		return "", 0, fmt.Errorf("Could not get user home: %v", err)
 	}
-	file := path.Join(home, base)
-	fmt.Printf("Using file from '%s' from home directory\n", file)
+	fmt.Fprintf(os.Stderr, "... trying home directory %s\n", home);
+	file, port, err = FindFocusTreeFileInDir(home)
+	if file != "" {
+		return file, port, err
+	}
+	// file := path.Join(home, base)
+	// fmt.Printf("Using file from '%s' from home directory\n", file)
 
-	if _, err := os.Stat(file); errors.Is(err, os.ErrNotExist) {
-		tm := NewTreeManager()
-		tm.File = file
-		tm.ToFile()
-	}
-	return TreeManagerFromFile(file)
+	return "", 0, fmt.Errorf("No focustree found")
 }
 
 func FocusTreeServer(port int, host string, file string, search bool) error {
 	if file == "" {
-		t, err := FindFocusTree(port)
-		if err != nil {
-			return fmt.Errorf("could not load focus tree file: %v", err)
-		}
-		TheTreeManager = t
-	} else {
-		t, err := TreeManagerFromFile(file)
-		if err != nil {
-			return fmt.Errorf("could not get Focus Tree from file '%s': %v", file, err)
-		}
-		TheTreeManager = t
+		return fmt.Errorf("No file given")
 	}
+	tm, err := TreeManagerFromFile(file)
+	if err != nil {
+		return fmt.Errorf("FocusTreeServer: %v", err)
+	}
+
+	TheTreeManager = tm
 
 	if TheTreeManager == nil {
 		return fmt.Errorf("Unexpected error: TheTreeManager is nil")
@@ -154,7 +172,7 @@ func FocusTreeServer(port int, host string, file string, search bool) error {
 
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
-		panic(err)
+		return err
 	}
 	fmt.Printf("Starting server on host %s, port %d\n", host, port)
 	fmt.Printf("Visit web client with 'http://%s:%d/simple-client?ftserver_token=%s\n", host, port, TheToken)

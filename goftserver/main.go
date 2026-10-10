@@ -16,7 +16,7 @@ func main() {
 	var new bool
 	var search bool
 
-	flag.IntVar(&port, "port", 5051, "Port on which to start the server")
+	flag.IntVar(&port, "port", -1, "Port on which to start the server")
 	flag.StringVar(&file, "file", "", "File to use load and save tree")
 	flag.StringVar(&host, "host", "0.0.0.0", "Host on which to run server")
 	flag.BoolVar(&new, "new", false, "Create empty tree with filename")
@@ -30,6 +30,13 @@ func main() {
 		if err != nil {
 			fmt.Printf("\033[1;31mERROR\033[0m: %v\n", err)
 			os.Exit(1)
+		}
+	}
+	if port == -1 && file == "" {
+		var err error
+		file, port, err = focus.FindFocusTree()
+		if err != nil {
+			panic(err)
 		}
 	}
 
