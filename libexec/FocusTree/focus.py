@@ -360,6 +360,11 @@ class TreeManager:
             return self.current_task.printable_ancestors()
         else:
             return colored("No current task\n", 'red') + self.printable_tree()
+    @register_command
+    def file(self, args):
+        """ Print the file that the tree is saved in """
+        # Causes 'file' to be in completions
+        pass
 
     @register_command
     def help(self, args):

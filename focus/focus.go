@@ -542,6 +542,8 @@ func (tm *TreeManager) handleCommand(w http.ResponseWriter, r *http.Request) {
 		}
 	case "reassign-ids":
 		tm.ReassignIds()
+	case "file":
+		resp.TermOutput = tm.File
 	default:
 		resp.TermOutput = ""
 		resp.Error = fmt.Sprintf("(goftserver) Unknown command '%s' (args: '%s')", command, args)
